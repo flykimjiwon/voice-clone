@@ -1,0 +1,29 @@
+[
+  {
+    "filename": "kss_female_01.wav",
+    "name": "여성 아나운서 1",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "announcer",
+    "language": "ko",
+    "description": "차분하고 전문적인 여성 아나운서 톤"
+  },
+  {
+    "filename": "aihub_male_01.wav",
+    "name": "남성 내레이터 1",
+    "gender": "male",
+    "age_group": "adult",
+    "tone": "narrator",
+    "language": "ko",
+    "description": "깊고 신뢰감 있는 남성 내레이터"
+  },
+  {
+    "filename": "vctk_p225.wav",
+    "name": "Female Narrator 1",
+    "gender": "female",
+    "age_group": "young_adult",
+    "tone": "narrator",
+    "language": "en",
+    "description": "Warm and expressive female narrator"
+  }
+]

@@ -1,0 +1,10 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+aiofiles==24.1.0
+
+# TTS Engines (install separately based on need)
+# XTTS v2:     pip install torch torchaudio && pip install coqui-tts
+# Kokoro:      pip install kokoro soundfile "misaki[en]" && brew install espeak-ng
+# Chatterbox:  pip install chatterbox-tts

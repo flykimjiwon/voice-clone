@@ -1,0 +1,128 @@
+[
+  {
+    "filename": "kss_f01.wav",
+    "name": "KSS 여성 내레이터",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "narrator",
+    "language": "ko",
+    "description": "KSS 데이터셋 기반의 표준 여성 내레이터"
+  },
+  {
+    "filename": "kss_f02.wav",
+    "name": "따뜻한 여성",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "warm",
+    "language": "ko",
+    "description": "따뜻하고 친근한 느낌의 여성 목소리"
+  },
+  {
+    "filename": "kss_f03.wav",
+    "name": "또렷한 여성",
+    "gender": "female",
+    "age_group": "young_adult",
+    "tone": "announcer",
+    "language": "ko",
+    "description": "발음이 또렷하고 명확한 여성 목소리"
+  },
+  {
+    "filename": "kss_f04.wav",
+    "name": "부드러운 여성",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "soft",
+    "language": "ko",
+    "description": "부드럽고 감미로운 여성 목소리"
+  },
+  {
+    "filename": "vctk_p225.wav",
+    "name": "Female Announcer",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "announcer",
+    "language": "en",
+    "description": "Clear and professional female announcer, VCTK speaker p225"
+  },
+  {
+    "filename": "vctk_p226.wav",
+    "name": "Female Narrator",
+    "gender": "female",
+    "age_group": "young_adult",
+    "tone": "narrator",
+    "language": "en",
+    "description": "Expressive female narrator with natural cadence, VCTK speaker p226"
+  },
+  {
+    "filename": "ljspeech_f01.wav",
+    "name": "Warm Female Voice",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "warm",
+    "language": "en",
+    "description": "Warm and pleasant female voice from LJ Speech dataset"
+  },
+  {
+    "filename": "libri_f01.wav",
+    "name": "Calm Female Voice",
+    "gender": "female",
+    "age_group": "adult",
+    "tone": "calm",
+    "language": "en",
+    "description": "Calm and measured female voice from LibriSpeech dataset"
+  },
+  {
+    "filename": "common_en_f01.wav",
+    "name": "Expressive Female Voice",
+    "gender": "female",
+    "age_group": "young_adult",
+    "tone": "expressive",
+    "language": "en",
+    "description": "Lively and expressive female voice with natural emotion"
+  },
+  {
+    "filename": "vctk_p226m.wav",
+    "name": "Male Announcer",
+    "gender": "male",
+    "age_group": "adult",
+    "tone": "announcer",
+    "language": "en",
+    "description": "Authoritative male announcer voice, VCTK corpus"
+  },
+  {
+    "filename": "vctk_p227.wav",
+    "name": "Male Narrator",
+    "gender": "male",
+    "age_group": "adult",
+    "tone": "narrator",
+    "language": "en",
+    "description": "Steady and engaging male narrator, VCTK speaker p227"
+  },
+  {
+    "filename": "libri_m01.wav",
+    "name": "Deep Male Voice",
+    "gender": "male",
+    "age_group": "adult",
+    "tone": "deep",
+    "language": "en",
+    "description": "Rich and deep male voice from LibriSpeech dataset"
+  },
+  {
+    "filename": "libri_m02.wav",
+    "name": "Male Newsreader",
+    "gender": "male",
+    "age_group": "adult",
+    "tone": "newsreader",
+    "language": "en",
+    "description": "Crisp and professional male newsreader voice from LibriSpeech"
+  },
+  {
+    "filename": "common_en_m01.wav",
+    "name": "Documentary Male Voice",
+    "gender": "male",
+    "age_group": "adult",
+    "tone": "documentary",
+    "language": "en",
+    "description": "Measured and authoritative male voice suited for documentary narration"
+  }
+]
