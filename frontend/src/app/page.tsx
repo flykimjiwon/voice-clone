@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Loader2,
   Mic2,
+  Save,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,7 @@ import ParamsPanel from "@/components/ParamsPanel";
 import AudioPlayer from "@/components/AudioPlayer";
 import ServerLogModal from "@/components/ServerLogModal";
 import VoicePresetPanel from "@/components/VoicePresetPanel";
-import { fetchEngineStatus, synthesize, getAudioUrl, API_BASE } from "@/lib/api";
+import { fetchEngineStatus, synthesize, getAudioUrl, prepareVoice, saveVoicePreset, API_BASE } from "@/lib/api";
 import { splitSentences } from "@/lib/split-sentences";
 import type {
   EngineStatus,
@@ -169,6 +170,31 @@ export default function Home() {
   const onPresetSaved = useCallback(() => {
     fetchEngineStatus().then(setEngineStatus).catch(() => {});
   }, []);
+
+  const [presetRefreshKey, setPresetRefreshKey] = useState(0);
+  const [savePresetName, setSavePresetName] = useState("");
+  const [savePresetLoading, setSavePresetLoading] = useState(false);
+  const [savePresetDone, setSavePresetDone] = useState(false);
+
+  const handleSaveAsPreset = useCallback(async () => {
+    if (!savePresetName.trim() || voiceIds.length === 0) return;
+    setSavePresetLoading(true);
+    setSavePresetDone(false);
+    setError(null);
+    try {
+      await prepareVoice(voiceIds, params.exaggeration);
+      await saveVoicePreset(savePresetName.trim());
+      setSavePresetName("");
+      setSavePresetDone(true);
+      setPresetRefreshKey((k) => k + 1);
+      fetchEngineStatus().then(setEngineStatus).catch(() => {});
+      setTimeout(() => setSavePresetDone(false), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "프리셋 저장 실패");
+    } finally {
+      setSavePresetLoading(false);
+    }
+  }, [savePresetName, voiceIds, params.exaggeration]);
 
   useEffect(() => {
     setStreamMode(splitSentences(text).length > 1);
@@ -420,6 +446,7 @@ export default function Home() {
             </div>
           )}
           <VoicePresetPanel
+            key={presetRefreshKey}
             canSave={engineStatus?.voice_prepared === true}
             activePresetId={activePresetId}
             onPresetLoaded={onPresetLoaded}
@@ -442,6 +469,41 @@ export default function Home() {
             </span>
           </div>
           <VoiceUploader onVoicesChanged={onVoicesChanged} />
+
+          {voiceIds.length > 0 && !voicePresetMode && (
+            <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/40 p-3">
+              <Save className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Input
+                value={savePresetName}
+                onChange={(e) => setSavePresetName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleSaveAsPreset();
+                  }
+                }}
+                placeholder="프리셋 이름을 입력하여 저장"
+                disabled={savePresetLoading}
+                className="h-8 text-xs"
+              />
+              <Button
+                onClick={() => void handleSaveAsPreset()}
+                disabled={!savePresetName.trim() || savePresetLoading}
+                size="xs"
+                className="shrink-0 gap-1.5 bg-violet-500 text-white hover:bg-violet-400 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
+              >
+                {savePresetLoading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Save className="h-3 w-3" />
+                )}
+                저장
+              </Button>
+              {savePresetDone && (
+                <span className="shrink-0 text-[11px] text-emerald-500">저장됨</span>
+              )}
+            </div>
+          )}
         </section>
 
         {/* ─── Section 3: Text Input ─── */}
