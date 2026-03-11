@@ -11,6 +11,7 @@ services:
       - tts-models:/root/.local/share/tts
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - FISH_SPEECH_URL=http://fish-speech:8080
     deploy:
       resources:
         reservations:
@@ -18,6 +19,37 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    restart: unless-stopped
+    depends_on:
+      fish-speech:
+        condition: service_healthy
+
+  fish-speech:
+    image: fishaudio/fish-speech:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - fish-speech-models:/checkpoints
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    command: >
+      python tools/api_server.py
+      --llama-checkpoint-path /checkpoints/s2-pro
+      --decoder-checkpoint-path /checkpoints/s2-pro/codec.pth
+      --listen 0.0.0.0:8080
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     restart: unless-stopped
 
   frontend:
@@ -34,3 +66,4 @@ services:
 
 volumes:
   tts-models:
+  fish-speech-models:
