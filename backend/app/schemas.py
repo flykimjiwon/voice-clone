@@ -3,6 +3,7 @@ from typing import Optional
 
 
 class EngineStatusResponse(BaseModel):
+    engine_id: str = "chatterbox"
     available: bool
     name: str
     description: str
@@ -10,6 +11,10 @@ class EngineStatusResponse(BaseModel):
     supports_voice_cloning: bool
     voice_prepared: bool = False
     error: Optional[str] = None
+
+
+class EngineListResponse(BaseModel):
+    engines: list[EngineStatusResponse]
 
 
 class SynthesizeResponse(BaseModel):
@@ -30,6 +35,7 @@ class VoicePresetResponse(BaseModel):
     id: str
     name: str
     created_at: float
+    engine_id: str = "chatterbox"
     gender: Optional[str] = None
     age_group: Optional[str] = None
     tone: Optional[str] = None

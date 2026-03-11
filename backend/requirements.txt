@@ -3,8 +3,13 @@ uvicorn[standard]==0.34.0
 python-multipart==0.0.20
 pydantic==2.10.4
 aiofiles==24.1.0
+requests>=2.31.0
 
 # TTS Engines (install separately based on need)
-# XTTS v2:     pip install torch torchaudio && pip install coqui-tts
-# Kokoro:      pip install kokoro soundfile "misaki[en]" && brew install espeak-ng
-# Chatterbox:  pip install chatterbox-tts
+# Chatterbox:    pip install chatterbox-tts
+# Fish Speech S2: pip install -e .[cpu]  (or .[cu129] for CUDA)
+#   Model: hf download fishaudio/s2-pro --local-dir checkpoints/s2-pro
+#   Server: python tools/api_server.py --llama-checkpoint-path checkpoints/s2-pro \
+#            --decoder-checkpoint-path checkpoints/s2-pro/codec.pth --listen 0.0.0.0:8080
+# ormsgpack (optional, faster than JSON for Fish Speech API):
+#   pip install ormsgpack

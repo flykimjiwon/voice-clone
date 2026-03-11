@@ -14,3 +14,6 @@ MAX_UPLOAD_SIZE = 50 * 1024 * 1024
 ALLOWED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".webm"}
 
 OUTPUT_SAMPLE_RATE = 22050
+
+# Fish Speech API server URL (can be overridden via env var)
+FISH_SPEECH_URL = os.environ.get("FISH_SPEECH_URL", "http://localhost:8080")
