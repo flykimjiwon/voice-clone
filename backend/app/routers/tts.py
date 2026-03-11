@@ -10,33 +10,55 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import FileResponse
 
-from ..config import UPLOAD_DIR, OUTPUT_DIR, VOICE_PRESETS_DIR, ALLOWED_AUDIO_EXTENSIONS
+from ..config import (
+    UPLOAD_DIR,
+    OUTPUT_DIR,
+    VOICE_PRESETS_DIR,
+    ALLOWED_AUDIO_EXTENSIONS,
+    FISH_SPEECH_URL,
+)
 from ..schemas import (
     EngineStatusResponse,
+    EngineListResponse,
     SynthesizeResponse,
     UploadVoiceResponse,
     VoicePresetResponse,
     VoicePresetListResponse,
 )
+from ..engines.base import TTSEngine
 from ..engines.chatterbox_engine import ChatterboxEngine
+from ..engines.fish_speech_engine import FishSpeechEngine
 from ..log_stream import log_buffer
 
 router = APIRouter(prefix="/api", tags=["tts"])
 
-_engine = ChatterboxEngine()
+_engines: dict[str, TTSEngine] = {
+    "chatterbox": ChatterboxEngine(),
+    "fish_speech": FishSpeechEngine(server_url=FISH_SPEECH_URL),
+}
 _executor = ThreadPoolExecutor(max_workers=2)
 
 
-def _emit_progress(percent: int, stage: str):
+def _get_engine(engine_id: str) -> TTSEngine:
+    engine = _engines.get(engine_id)
+    if not engine:
+        raise HTTPException(
+            status_code=400,
+            detail=f"알 수 없는 엔진: '{engine_id}'. 지원 엔진: {list(_engines.keys())}",
+        )
+    return engine
+
+
+def _emit_progress(engine_id: str, percent: int, stage: str) -> None:
     log_buffer.push_sync(
-        json.dumps({"engine_id": "chatterbox", "percent": percent, "stage": stage}),
+        json.dumps({"engine_id": engine_id, "percent": percent, "stage": stage}),
         "PROGRESS",
     )
 
 
-def _emit_log(msg: str, level: str = "INFO"):
+def _emit_log(engine_id: str, msg: str, level: str = "INFO") -> None:
     log_buffer.push_sync(
-        json.dumps({"engine_id": "chatterbox", "text": msg}),
+        json.dumps({"engine_id": engine_id, "text": msg}),
         f"ENGINE_{level}",
     )
 
@@ -44,16 +66,39 @@ def _emit_log(msg: str, level: str = "INFO"):
 # ─── Engine status ───
 
 
+@router.get("/engines", response_model=EngineListResponse)
+async def list_engines():
+    """모든 엔진 상태 반환."""
+    return EngineListResponse(
+        engines=[
+            EngineStatusResponse(
+                engine_id=eid,
+                available=e.is_available(),
+                name=e.engine_name,
+                description=e.description,
+                supported_languages=e.supported_languages,
+                supports_voice_cloning=e.supports_voice_cloning,
+                voice_prepared=e.voice_prepared,
+                error=e.get_error_message(),
+            )
+            for eid, e in _engines.items()
+        ]
+    )
+
+
 @router.get("/engine", response_model=EngineStatusResponse)
-async def engine_status():
+async def engine_status(engine_id: str = Query("chatterbox")):
+    """단일 엔진 상태 반환."""
+    engine = _get_engine(engine_id)
     return EngineStatusResponse(
-        available=_engine.is_available(),
-        name=_engine.engine_name,
-        description=_engine.description,
-        supported_languages=_engine.supported_languages,
-        supports_voice_cloning=_engine.supports_voice_cloning,
-        voice_prepared=_engine.voice_prepared,
-        error=_engine.get_error_message(),
+        engine_id=engine_id,
+        available=engine.is_available(),
+        name=engine.engine_name,
+        description=engine.description,
+        supported_languages=engine.supported_languages,
+        supports_voice_cloning=engine.supports_voice_cloning,
+        voice_prepared=engine.voice_prepared,
+        error=engine.get_error_message(),
     )
 
 
@@ -62,12 +107,18 @@ async def engine_status():
 
 @router.post("/prepare-voice")
 async def prepare_voice(
+    engine_id: str = Form("chatterbox"),
     voice_id: str = Form(""),
     voice_ids: str = Form(""),
     exaggeration: float = Form(0.5),
+    transcript: str = Form(""),
 ):
-    if not _engine.is_available():
-        raise HTTPException(status_code=503, detail="Chatterbox 사용 불가")
+    engine = _get_engine(engine_id)
+    if not engine.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail=f"{engine.engine_name} 사용 불가: {engine.get_error_message()}",
+        )
 
     ids_str = voice_ids if voice_ids else voice_id
     if not ids_str:
@@ -77,25 +128,29 @@ async def prepare_voice(
     if not speaker_wavs:
         raise HTTPException(status_code=404, detail="음성 파일을 찾을 수 없습니다.")
 
-    def _run():
-        _emit_progress(5, "모델 초기화 중...")
-        _engine.initialize()
-        _emit_progress(30, "음성 임베딩 추출 중...")
-        _emit_log("참조 음성 임베딩 준비 시작")
-        was_new = _engine.prepare_voice(speaker_wavs[0], exaggeration=exaggeration)
-        _emit_progress(100, "준비 완료")
+    def _run() -> bool:
+        _emit_progress(engine_id, 5, "모델 초기화 중...")
+        engine.initialize()
+        _emit_progress(engine_id, 30, "음성 임베딩 추출 중...")
+        _emit_log(engine_id, "참조 음성 임베딩 준비 시작")
+        was_new = engine.prepare_voice(
+            speaker_wavs[0],
+            exaggeration=exaggeration,
+            transcript=transcript,
+        )
+        _emit_progress(engine_id, 100, "준비 완료")
         if was_new:
-            _emit_log("음성 임베딩 추출 완료 — 캐싱됨")
+            _emit_log(engine_id, "음성 임베딩 추출 완료 — 캐싱됨")
         else:
-            _emit_log("이미 캐싱된 음성 임베딩 사용")
+            _emit_log(engine_id, "이미 캐싱된 음성 임베딩 사용")
         return was_new
 
     loop = asyncio.get_event_loop()
     try:
         was_new = await loop.run_in_executor(_executor, _run)
     except Exception as e:
-        _emit_progress(-1, f"에러: {str(e)[:100]}")
-        _emit_log(f"에러: {str(e)}", "ERROR")
+        _emit_progress(engine_id, -1, f"에러: {str(e)[:100]}")
+        _emit_log(engine_id, f"에러: {str(e)}", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"prepared": True, "was_new": was_new}
@@ -165,21 +220,25 @@ async def upload_voice(file: UploadFile = File(...)):
 
 @router.post("/synthesize", response_model=SynthesizeResponse)
 async def synthesize(
+    engine_id: str = Form("chatterbox"),
     text: str = Form(...),
     language: str = Form("ko"),
     voice_id: str = Form(""),
     voice_ids: str = Form(""),
+    transcript: str = Form(""),
     exaggeration: float = Form(0.5),
     cfg_weight: float = Form(0.5),
     temperature: float = Form(0.8),
     repetition_penalty: float = Form(2.0),
     min_p: float = Form(0.05),
     top_p: float = Form(1.0),
+    chunk_length: int = Form(200),
 ):
-    if not _engine.is_available():
+    engine = _get_engine(engine_id)
+    if not engine.is_available():
         raise HTTPException(
             status_code=503,
-            detail=f"Chatterbox 사용 불가: {_engine.get_error_message()}",
+            detail=f"{engine.engine_name} 사용 불가: {engine.get_error_message()}",
         )
 
     ids_str = voice_ids if voice_ids else voice_id
@@ -191,7 +250,7 @@ async def synthesize(
             raise HTTPException(
                 status_code=404, detail="업로드된 음성 파일을 찾을 수 없습니다."
             )
-    elif not _engine.voice_prepared:
+    elif not engine.voice_prepared:
         raise HTTPException(
             status_code=400,
             detail="voice_id가 없고 로드된 음성 프리셋도 없습니다.",
@@ -201,37 +260,33 @@ async def synthesize(
     output_path = OUTPUT_DIR / f"{output_id}.wav"
 
     params = {
+        "transcript": transcript,
         "exaggeration": exaggeration,
         "cfg_weight": cfg_weight,
         "temperature": temperature,
         "repetition_penalty": repetition_penalty,
         "min_p": min_p,
         "top_p": top_p,
+        "chunk_length": chunk_length,
     }
 
-    def _run():
-        _emit_progress(5, "모델 초기화 중...")
-        _emit_log("Chatterbox 모델 초기화 시작")
-        _engine.initialize()
-        cached = _engine.voice_prepared and _engine._prepared_hash is not None
-        if cached and not speaker_wavs:
-            _emit_progress(20, "프리셋 음성으로 즉시 합성...")
-            _emit_log("프리셋 음성 임베딩 사용 — 참조 음성 처리 완전 스킵")
-        elif cached:
-            _emit_progress(20, "캐싱된 음성 사용, 합성 시작...")
-            _emit_log("캐싱된 음성 임베딩 사용 — 참조 음성 처리 스킵")
+    def _run() -> dict:
+        _emit_progress(engine_id, 5, "모델 초기화 중...")
+        _emit_log(engine_id, f"{engine.engine_name} 초기화 시작")
+        engine.initialize()
+        cached = engine.voice_prepared and not speaker_wavs
+        if cached:
+            _emit_progress(engine_id, 20, "프리셋 음성으로 즉시 합성...")
+            _emit_log(engine_id, "프리셋 음성 임베딩 사용 — 참조 음성 처리 완전 스킵")
         else:
-            _emit_progress(20, "음성 합성 시작...")
-        _emit_log(f"텍스트 길이: {len(text)}자, 언어: {language}")
+            _emit_progress(engine_id, 20, "음성 합성 시작...")
+        _emit_log(engine_id, f"텍스트 길이: {len(text)}자, 언어: {language}")
+        result = engine.synthesize(text, speaker_wavs, language, output_path, **params)
+        _emit_progress(engine_id, 100, "완료")
         _emit_log(
-            f"파라미터: exag={exaggeration}, cfg={cfg_weight}, "
-            f"temp={temperature}, rep_pen={repetition_penalty}"
-        )
-        result = _engine.synthesize(text, speaker_wavs, language, output_path, **params)
-        _emit_progress(100, "완료")
-        _emit_log(
+            engine_id,
             f"완료 — {result['processing_time_seconds']}초, "
-            f"{result['duration_seconds']}초 오디오 생성"
+            f"{result['duration_seconds']}초 오디오 생성",
         )
         return result
 
@@ -239,8 +294,8 @@ async def synthesize(
     try:
         result = await loop.run_in_executor(_executor, _run)
     except Exception as e:
-        _emit_progress(-1, f"에러: {str(e)[:100]}")
-        _emit_log(f"에러: {str(e)}", "ERROR")
+        _emit_progress(engine_id, -1, f"에러: {str(e)[:100]}")
+        _emit_log(engine_id, f"에러: {str(e)}", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
 
     return SynthesizeResponse(
@@ -259,6 +314,7 @@ async def synthesize(
 async def list_voice_presets(
     gender: Optional[str] = Query(None),
     language: Optional[str] = Query(None),
+    engine: Optional[str] = Query(None),
 ):
     presets = []
     for json_path in sorted(VOICE_PRESETS_DIR.glob("*.json"), reverse=True):
@@ -272,6 +328,8 @@ async def list_voice_presets(
             continue
         if language is not None and preset.language != language:
             continue
+        if engine is not None and preset.engine_id != engine:
+            continue
 
         presets.append(preset)
     return VoicePresetListResponse(presets=presets)
@@ -280,6 +338,7 @@ async def list_voice_presets(
 @router.post("/voice-presets", response_model=VoicePresetResponse)
 async def save_voice_preset(
     name: str = Form(...),
+    engine_id: str = Form("chatterbox"),
     gender: Optional[str] = Form(None),
     age_group: Optional[str] = Form(None),
     tone: Optional[str] = Form(None),
@@ -287,7 +346,8 @@ async def save_voice_preset(
     description: Optional[str] = Form(None),
     exaggeration_val: Optional[float] = Form(None),
 ):
-    if not _engine.voice_prepared:
+    engine = _get_engine(engine_id)
+    if not engine.voice_prepared:
         raise HTTPException(
             status_code=400,
             detail="저장할 음성 임베딩이 없습니다. 먼저 음성을 업로드하고 생성하세요.",
@@ -297,8 +357,8 @@ async def save_voice_preset(
     pt_path = VOICE_PRESETS_DIR / f"{preset_id}.pt"
     meta_path = VOICE_PRESETS_DIR / f"{preset_id}.json"
 
-    def _run():
-        _engine.save_voice_embedding(pt_path)
+    def _run() -> None:
+        engine.save_voice_embedding(pt_path)
 
     loop = asyncio.get_event_loop()
     try:
@@ -306,10 +366,11 @@ async def save_voice_preset(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    metadata = {
+    metadata: dict = {
         "id": preset_id,
         "name": name,
         "created_at": time.time(),
+        "engine_id": engine_id,
     }
     for key, val in [
         ("gender", gender),
@@ -324,7 +385,7 @@ async def save_voice_preset(
 
     meta_path.write_text(json.dumps(metadata, ensure_ascii=False))
 
-    _emit_log(f"음성 프리셋 저장: {name}")
+    _emit_log(engine_id, f"음성 프리셋 저장: {name}")
     return VoicePresetResponse(**metadata)
 
 
@@ -333,26 +394,34 @@ async def load_voice_preset(preset_id: str):
     pt_path = VOICE_PRESETS_DIR / f"{preset_id}.pt"
     meta_path = VOICE_PRESETS_DIR / f"{preset_id}.json"
 
-    if not pt_path.exists() or not meta_path.exists():
+    if not meta_path.exists():
         raise HTTPException(status_code=404, detail="음성 프리셋을 찾을 수 없습니다.")
 
-    def _run():
-        _emit_progress(5, "모델 초기화 중...")
-        _engine.initialize()
-        _emit_progress(30, "음성 프리셋 로딩 중...")
-        _engine.load_voice_embedding(pt_path)
-        _emit_progress(100, "프리셋 로드 완료")
+    meta = json.loads(meta_path.read_text())
+    engine_id = meta.get("engine_id", "chatterbox")
+    engine = _get_engine(engine_id)
+
+    if not engine.has_saved_embedding(pt_path):
+        raise HTTPException(
+            status_code=404, detail="음성 임베딩 파일을 찾을 수 없습니다."
+        )
+
+    def _run() -> None:
+        _emit_progress(engine_id, 5, "모델 초기화 중...")
+        engine.initialize()
+        _emit_progress(engine_id, 30, "음성 프리셋 로딩 중...")
+        engine.load_voice_embedding(pt_path)
+        _emit_progress(engine_id, 100, "프리셋 로드 완료")
 
     loop = asyncio.get_event_loop()
     try:
         await loop.run_in_executor(_executor, _run)
     except Exception as e:
-        _emit_progress(-1, f"에러: {str(e)[:100]}")
+        _emit_progress(engine_id, -1, f"에러: {str(e)[:100]}")
         raise HTTPException(status_code=500, detail=str(e))
 
-    meta = json.loads(meta_path.read_text())
-    _emit_log(f"음성 프리셋 로드: {meta.get('name', preset_id)}")
-    return {"loaded": True, "preset_id": preset_id}
+    _emit_log(engine_id, f"음성 프리셋 로드: {meta.get('name', preset_id)}")
+    return {"loaded": True, "preset_id": preset_id, "engine_id": engine_id}
 
 
 @router.delete("/voice-presets/{preset_id}")
@@ -364,9 +433,11 @@ async def delete_voice_preset(preset_id: str):
         raise HTTPException(status_code=404, detail="음성 프리셋을 찾을 수 없습니다.")
 
     name = "unknown"
+    engine_id = "chatterbox"
     try:
         data = json.loads(meta_path.read_text())
         name = data.get("name", name)
+        engine_id = data.get("engine_id", "chatterbox")
         if data.get("is_builtin", False):
             raise HTTPException(
                 status_code=403, detail="내장 프리셋은 삭제할 수 없습니다."
@@ -376,10 +447,16 @@ async def delete_voice_preset(preset_id: str):
     except Exception:
         pass
 
-    pt_path.unlink(missing_ok=True)
+    # Use engine-specific delete (handles different file formats per engine)
+    engine = _engines.get(engine_id)
+    if engine:
+        engine.delete_saved_embedding(pt_path)
+    else:
+        pt_path.unlink(missing_ok=True)
+
     meta_path.unlink(missing_ok=True)
 
-    _emit_log(f"음성 프리셋 삭제: {name}")
+    _emit_log(engine_id, f"음성 프리셋 삭제: {name}")
     return {"deleted": True, "preset_id": preset_id}
 
 
