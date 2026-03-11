@@ -11,7 +11,7 @@ import {
   deleteVoicePreset,
   getAudioUrl,
 } from "@/lib/api";
-import type { VoicePreset } from "@/lib/types";
+import type { VoicePreset, EngineId } from "@/lib/types";
 
 type TabType = "all" | "female" | "male" | "user";
 
@@ -20,6 +20,7 @@ interface VoicePresetPanelProps {
   activePresetId: string | null;
   onPresetLoaded: (presetId: string, presetName: string) => void;
   onPresetSaved: () => void;
+  engineFilter?: EngineId;
 }
 
 function formatDate(ts: number): string {
@@ -36,6 +37,7 @@ export default function VoicePresetPanel({
   activePresetId,
   onPresetLoaded,
   onPresetSaved,
+  engineFilter,
 }: VoicePresetPanelProps) {
   const [presets, setPresets] = useState<VoicePreset[]>([]);
   const [name, setName] = useState("");
@@ -51,10 +53,10 @@ export default function VoicePresetPanel({
   const fetchPresets = useCallback(async (tab: TabType) => {
     try {
       let list: VoicePreset[];
-      if (tab === "female") list = await fetchVoicePresets("female");
-      else if (tab === "male") list = await fetchVoicePresets("male");
+      if (tab === "female") list = await fetchVoicePresets("female", undefined, engineFilter);
+      else if (tab === "male") list = await fetchVoicePresets("male", undefined, engineFilter);
       else {
-        list = await fetchVoicePresets();
+        list = await fetchVoicePresets(undefined, undefined, engineFilter);
         if (tab === "user") list = list.filter((p) => !p.is_builtin);
       }
       list.sort((a, b) => {
@@ -66,7 +68,7 @@ export default function VoicePresetPanel({
     } catch (e) {
       setError(e instanceof Error ? e.message : "프리셋 목록을 불러올 수 없습니다.");
     }
-  }, []);
+  }, [engineFilter]);
 
   const refresh = useCallback(() => fetchPresets(activeTab), [fetchPresets, activeTab]);
 
@@ -81,7 +83,7 @@ export default function VoicePresetPanel({
     setError(null);
     setSaving(true);
     try {
-      await saveVoicePreset(name.trim());
+      await saveVoicePreset(name.trim(), engineFilter ?? "chatterbox");
       setName("");
       await refresh();
       onPresetSaved();
@@ -90,7 +92,7 @@ export default function VoicePresetPanel({
     } finally {
       setSaving(false);
     }
-  }, [canSave, name, saving, refresh, onPresetSaved]);
+  }, [canSave, name, saving, refresh, onPresetSaved, engineFilter]);
 
   // ─── Load ───
 
