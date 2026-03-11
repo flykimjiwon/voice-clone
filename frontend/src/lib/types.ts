@@ -1,4 +1,7 @@
+export type EngineId = "chatterbox" | "fish_speech";
+
 export interface EngineStatus {
+  engine_id: EngineId;
   available: boolean;
   name: string;
   description: string;
@@ -6,6 +9,10 @@ export interface EngineStatus {
   supports_voice_cloning: boolean;
   voice_prepared: boolean;
   error?: string | null;
+}
+
+export interface EngineListResponse {
+  engines: EngineStatus[];
 }
 
 export interface SynthesizeResponse {
@@ -22,13 +29,18 @@ export interface UploadVoiceResponse {
   duration_seconds: number;
 }
 
+/** Shared params (union of Chatterbox + Fish Speech). Each engine ignores irrelevant fields. */
 export interface SynthesisParams {
+  // Chatterbox
   exaggeration: number;
   cfg_weight: number;
+  min_p: number;
+  // Shared
   temperature: number;
   repetition_penalty: number;
-  min_p: number;
   top_p: number;
+  // Fish Speech
+  chunk_length: number;
 }
 
 export interface EngineProgress {
@@ -56,6 +68,7 @@ export interface VoicePreset {
   id: string;
   name: string;
   created_at: number;
+  engine_id: EngineId;
   gender?: string;
   age_group?: string;
   tone?: string;
