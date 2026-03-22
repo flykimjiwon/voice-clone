@@ -3,7 +3,7 @@ export function splitSentences(text: string): string[] {
   if (!normalized) return [];
 
   const matches = normalized.match(
-    /.+?(?:[.!?](?=\s|$)|(?:습니다|ㅂ니다|니다|어요|아요|다|요|죠|네|까)(?=\s|$)|\n|$)/gu,
+    /.+?(?:[.!?。！？](?=\s|$)|(?:습니다|ㅂ니다|니다|어요|아요|다|요|죠|네|까)(?=\s|$)|\n|$)/gu,
   );
 
   if (!matches) return [];

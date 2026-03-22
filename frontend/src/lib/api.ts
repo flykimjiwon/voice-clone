@@ -7,6 +7,8 @@ import type {
   UploadVoiceResponse,
   PrepareVoiceResponse,
   VoicePreset,
+  VocalAnalysisResponse,
+  SongRecommendationResponse,
 } from "./types";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -88,6 +90,8 @@ export async function synthesize(
   form.append("min_p", String(params.min_p));
   form.append("top_p", String(params.top_p));
   form.append("chunk_length", String(params.chunk_length));
+  form.append("speed", String(params.speed));
+  form.append("pitch_semitones", String(params.pitch_semitones));
 
   const res = await fetch(`${API_BASE}/api/synthesize`, {
     method: "POST",
@@ -165,4 +169,45 @@ export async function deleteVoicePreset(presetId: string): Promise<void> {
 
 export function getAudioUrl(path: string): string {
   return `${API_BASE}${path}`;
+}
+
+// ─── Vocal analysis ───
+
+export async function analyzeVocalRange(
+  voiceId?: string,
+  presetId?: string,
+): Promise<VocalAnalysisResponse> {
+  const params = new URLSearchParams();
+  if (voiceId) params.set("voice_id", voiceId);
+  if (presetId) params.set("preset_id", presetId);
+
+  const res = await fetch(`${API_BASE}/api/vocal/analyze?${params}`);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "음역대 분석에 실패했습니다.");
+  }
+
+  return res.json();
+}
+
+export async function getSongRecommendations(
+  lowHz: number,
+  highHz: number,
+  language?: string,
+): Promise<SongRecommendationResponse> {
+  const params = new URLSearchParams({
+    low_hz: String(lowHz),
+    high_hz: String(highHz),
+  });
+  if (language) params.set("language", language);
+
+  const res = await fetch(`${API_BASE}/api/vocal/songs?${params}`);
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "노래 추천을 가져올 수 없습니다.");
+  }
+
+  return res.json();
 }

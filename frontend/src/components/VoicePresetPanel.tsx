@@ -144,7 +144,7 @@ export default function VoicePresetPanel({
       audioRef.current?.pause();
       const audio = new Audio(getAudioUrl(preset.preview_audio_url));
       audio.onended = () => setPlayingPreviewId(null);
-      audio.play();
+      void audio.play().catch(() => {});
       audioRef.current = audio;
       setPlayingPreviewId(preset.id);
     },
@@ -185,7 +185,7 @@ export default function VoicePresetPanel({
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSave();
+            if (e.key === "Enter") void handleSave();
           }}
           placeholder={canSave ? "프리셋 이름 입력..." : "음성을 먼저 로드하세요"}
           disabled={!canSave}
@@ -228,7 +228,11 @@ export default function VoicePresetPanel({
           <span className="text-xs">저장된 음성 프리셋이 없습니다</span>
         </div>
       ) : (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2.5">
+          <p className="text-[11px] text-muted-foreground/70 px-1">
+            👆 프리셋을 선택하면 바로 음성을 생성할 수 있습니다
+          </p>
+          <div className="flex flex-col gap-1.5">
           {(() => {
             const dividerIdx = presets.findIndex(
               (p, i) => i > 0 && !p.is_builtin && presets[i - 1]?.is_builtin,
@@ -337,6 +341,7 @@ export default function VoicePresetPanel({
               );
             });
           })()}
+          </div>
         </div>
       )}
     </div>

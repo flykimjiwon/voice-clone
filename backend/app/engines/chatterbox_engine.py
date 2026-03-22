@@ -110,6 +110,7 @@ class ChatterboxEngine(TTSEngine):
 
             def _safe_load(*args, **kwargs):
                 kwargs.setdefault("map_location", self._device)
+                kwargs["weights_only"] = False
                 return _original_load(*args, **kwargs)
 
             torch.load = _safe_load
@@ -123,7 +124,7 @@ class ChatterboxEngine(TTSEngine):
             self._error = f"Chatterbox 모델 로드 실패: {e}"
             raise
 
-    def prepare_voice(self, speaker_wav: Path, exaggeration: float = 0.5) -> bool:
+    def prepare_voice(self, speaker_wav: Path, exaggeration: float = 0.5, **kwargs) -> bool:
         if self._model is None:
             self.initialize()
 
@@ -157,8 +158,32 @@ class ChatterboxEngine(TTSEngine):
 
         import torch
 
-        self._model.conds = torch.load(str(load_path), map_location=self._device)
+        self._model.conds = torch.load(
+            str(load_path), map_location=self._device, weights_only=False
+        )
         self._prepared_hash = f"preset_{load_path.stem}"
+
+    @staticmethod
+    def _post_process_audio(wav, sample_rate: int, speed: float, pitch_semitones: float):
+        """Apply speed and pitch modifications to generated audio."""
+        import torch
+        import torchaudio.functional as F
+
+        wav = wav.cpu()
+
+        # Pitch shift (without speed change)
+        if pitch_semitones != 0:
+            wav = F.pitch_shift(wav, sample_rate, n_steps=pitch_semitones)
+
+        # Speed change via interpolation (changes speed AND pitch together).
+        # Combined with pitch_semitones this gives full voice character control.
+        if speed != 1.0:
+            new_length = int(wav.shape[-1] / speed)
+            wav = torch.nn.functional.interpolate(
+                wav.unsqueeze(0), size=new_length, mode="linear", align_corners=False
+            ).squeeze(0)
+
+        return wav
 
     def synthesize(
         self,
@@ -172,6 +197,9 @@ class ChatterboxEngine(TTSEngine):
         repetition_penalty: float = 2.0,
         min_p: float = 0.05,
         top_p: float = 1.0,
+        speed: float = 1.0,
+        pitch_semitones: float = 0.0,
+        **kwargs,
     ) -> dict:
         if self._model is None:
             self.initialize()
@@ -183,18 +211,24 @@ class ChatterboxEngine(TTSEngine):
         if not speaker_wavs and not self.voice_prepared:
             raise RuntimeError("Chatterbox는 Voice Cloning용 참조 음성이 필요합니다.")
 
-        audio_prompt = None
+        # Always go through prepare_conditionals for reliable caching.
+        # This ensures model.conds is properly set before generate().
+        voice_cached = True
         if speaker_wavs:
             voice_hash = _file_hash(speaker_wavs[0])
             if voice_hash != self._prepared_hash:
-                audio_prompt = str(speaker_wavs[0])
+                self._model.prepare_conditionals(
+                    str(speaker_wavs[0]), exaggeration=exaggeration
+                )
                 self._prepared_hash = voice_hash
+                voice_cached = False
 
         lang_id = CHATTERBOX_LANG_MAP.get(language, "en")
 
+        # audio_prompt_path=None — always use cached conds from prepare_conditionals
         wav = self._model.generate(
             text,
-            audio_prompt_path=audio_prompt,
+            audio_prompt_path=None,
             language_id=lang_id,
             exaggeration=exaggeration,
             cfg_weight=cfg_weight,
@@ -205,6 +239,11 @@ class ChatterboxEngine(TTSEngine):
         )
 
         sample_rate = self._model.sr
+
+        # Post-process: apply speed/pitch for voice concept variation
+        if speed != 1.0 or pitch_semitones != 0:
+            wav = self._post_process_audio(wav, sample_rate, speed, pitch_semitones)
+
         torchaudio.save(str(output_path), wav, sample_rate)
 
         processing_time = time.time() - start
@@ -214,7 +253,7 @@ class ChatterboxEngine(TTSEngine):
             "duration_seconds": round(duration, 2),
             "processing_time_seconds": round(processing_time, 2),
             "sample_rate": sample_rate,
-            "voice_cached": audio_prompt is None,
+            "voice_cached": voice_cached,
         }
 
     def get_error_message(self) -> str | None:

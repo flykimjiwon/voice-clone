@@ -233,6 +233,8 @@ async def synthesize(
     min_p: float = Form(0.05),
     top_p: float = Form(1.0),
     chunk_length: int = Form(200),
+    speed: float = Form(1.0),
+    pitch_semitones: float = Form(0.0),
 ):
     engine = _get_engine(engine_id)
     if not engine.is_available():
@@ -268,6 +270,8 @@ async def synthesize(
         "min_p": min_p,
         "top_p": top_p,
         "chunk_length": chunk_length,
+        "speed": speed,
+        "pitch_semitones": pitch_semitones,
     }
 
     def _run() -> dict:

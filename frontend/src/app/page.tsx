@@ -15,6 +15,7 @@ import {
   Save,
   X,
   ChevronDown,
+  ArrowUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -28,6 +29,7 @@ import ParamsPanel, { DEFAULT_PARAMS, FISH_SPEECH_DEFAULT_PARAMS } from "@/compo
 import AudioPlayer from "@/components/AudioPlayer";
 import ServerLogModal from "@/components/ServerLogModal";
 import VoicePresetPanel from "@/components/VoicePresetPanel";
+import VocalAnalysisPanel from "@/components/VocalAnalysisPanel";
 import {
   fetchEngineStatus,
   synthesize,
@@ -109,7 +111,7 @@ export default function Home() {
   // ─── Queue state ───
   const [queueInput, setQueueInput] = useState("");
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [queueOpen, setQueueOpen] = useState(true);
+  const [queueOpen, setQueueOpen] = useState(false);
 
   // ─── UI state ───
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +125,7 @@ export default function Home() {
 
   const progressEsRef = useRef<EventSource | null>(null);
   const cancelledRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // ─── Engine status fetch ───
 
@@ -220,6 +223,8 @@ export default function Home() {
     setActivePresetId(presetId);
     setActivePresetName(presetName);
     setVoicePresetMode(true);
+    // Auto-focus text input for immediate typing
+    setTimeout(() => textareaRef.current?.focus(), 100);
   }, []);
 
   const onPresetSaved = useCallback(() => {
@@ -378,6 +383,9 @@ export default function Home() {
         const res = await runSynthesis(text);
         if (!cancelledRef.current) {
           setResult(res);
+          // Auto-play the generated audio
+          const audio = new Audio(getAudioUrl(res.audio_url));
+          void audio.play().catch(() => {});
         }
       } else {
         for (let i = 0; i < sentences.length; i++) {
@@ -423,6 +431,7 @@ export default function Home() {
     setQueue([]);
   }, []);
 
+  const isVoiceReady = voicePresetMode || voiceIds.length > 0;
   const canGenerate = queueHasPending ? canProcessQueue : canGenerateText;
   const generateLabel = queueHasPending
     ? "큐 생성"
@@ -451,7 +460,7 @@ export default function Home() {
             <div>
               <h1 className="text-lg font-bold tracking-tight">Voice Clone</h1>
               <p className="text-xs text-muted-foreground">
-                Zero-shot Voice Cloning
+                음성 하나로 누구의 목소리든 복제합니다
               </p>
             </div>
 
@@ -561,17 +570,25 @@ export default function Home() {
         {/* ─── Section 1: Voice Presets ─── */}
 
         <section className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
-              1
-            </span>
-            <h2 className="text-sm font-semibold text-foreground">음성 프리셋</h2>
-            <span className="text-[11px] text-muted-foreground">
-              {ENGINE_LABELS[activeEngine]} 전용
-            </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
+                1
+              </span>
+              <h2 className="text-sm font-semibold text-foreground">음성 프리셋</h2>
+              <Badge variant="outline" className="rounded-full text-[10px]">
+                {ENGINE_LABELS[activeEngine]}
+              </Badge>
+            </div>
+            <p className="ml-8 text-[11px] text-muted-foreground">
+              저장된 프리셋을 선택하면 바로 음성을 생성할 수 있습니다
+            </p>
           </div>
           {voicePresetMode && activePresetName && (
-            <div className="flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/5 px-3 py-2">
+            <div
+              className="flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/5 px-3 py-2"
+              style={{ animation: "slide-down-fade-in 0.25s ease-out" }}
+            >
               <Mic2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
               <span className="text-xs text-violet-700 dark:text-violet-300">
                 프리셋 음성 사용 중: <strong>{activePresetName}</strong>
@@ -601,14 +618,16 @@ export default function Home() {
         {/* ─── Section 2: Voice Upload/Record ─── */}
 
         <section className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
-              2
-            </span>
-            <h2 className="text-sm font-semibold text-foreground">새 음성 추가</h2>
-            <span className="text-[11px] text-muted-foreground">
-              업로드/녹음 후 프리셋으로 저장하거나 바로 생성
-            </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
+                2
+              </span>
+              <h2 className="text-sm font-semibold text-foreground">새 음성 추가</h2>
+            </div>
+            <p className="ml-8 text-[11px] text-muted-foreground">
+              음성 파일을 업로드하거나 직접 녹음하여 프리셋으로 저장하거나 바로 생성
+            </p>
           </div>
           <VoiceUploader onVoicesChanged={onVoicesChanged} />
 
@@ -669,11 +688,21 @@ export default function Home() {
         {/* ─── Section 3: Text Input ─── */}
 
         <section className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
-              3
-            </span>
-            <h2 className="text-sm font-semibold text-foreground">텍스트 입력</h2>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
+                3
+              </span>
+              <h2 className="text-sm font-semibold text-foreground">텍스트 입력</h2>
+            </div>
+            {!isVoiceReady && (
+              <div className="ml-8 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2">
+                <ArrowUp className="h-3.5 w-3.5 text-amber-500" />
+                <span className="text-[11px] text-amber-700 dark:text-amber-300">
+                  위에서 프리셋을 선택하거나 음성을 업로드하세요
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -692,6 +721,7 @@ export default function Home() {
               </select>
             </div>
             <Textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
@@ -709,17 +739,200 @@ export default function Home() {
               className="flex-1 resize-none rounded-xl"
             />
           </div>
-          <p className="text-[11px] text-muted-foreground">⌘+Enter로 생성</p>
+
+          {/* ─── Inline Generate Button ─── */}
+          <Button
+            onClick={
+              queueHasPending
+                ? () => void processQueue()
+                : () => void handleGenerate()
+            }
+            disabled={!canGenerate}
+            size="lg"
+            className={cn(
+              "w-full gap-2 rounded-xl px-6 active:scale-[0.97] disabled:opacity-100 transition-all",
+              canGenerate
+                ? "bg-violet-500 text-white hover:bg-violet-400"
+                : "bg-muted text-muted-foreground",
+              loading && "animate-[pulse-subtle_2s_ease-in-out_infinite]",
+            )}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {loading
+              ? "생성 중..."
+              : !isVoiceReady
+                ? "음성을 먼저 선택하세요"
+                : generateLabel}
+            {!queueHasPending && textSentences.length > 1 && !loading && isVoiceReady && (
+              <Badge
+                variant="outline"
+                className="ml-1 rounded-full border-violet-500/30 bg-violet-500/10 text-[10px] text-violet-600 dark:text-violet-300"
+              >
+                {textSentences.length}문장
+              </Badge>
+            )}
+          </Button>
+          {isVoiceReady && !loading && (
+            <p className="text-center text-[11px] text-muted-foreground">
+              ⌘+Enter로 빠르게 생성
+            </p>
+          )}
+          {loading && (
+            <Button variant="ghost" size="sm" onClick={handleCancel} className="self-center">
+              중단
+            </Button>
+          )}
+
+          {/* ─── Inline Result ─── */}
+
+          {!loading && result?.voice_cached && (
+            <p className="text-[11px] text-muted-foreground">
+              같은 음성으로 텍스트만 변경하여 빠르게 재생성 가능
+            </p>
+          )}
+
+          {loading && streamTotal > 1 && (
+            <Card className="py-0 gap-0">
+              <CardContent className="flex flex-col gap-2.5 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                    문장 {Math.min(streamIndex + 1, streamTotal)}/{streamTotal}{" "}
+                    생성 중...
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-all"
+                    style={{
+                      width: `${(streamIndex / streamTotal) * 100}%`,
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {loading && streamTotal <= 1 && progress && progress.percent >= 0 && (
+            <Card className="py-0 gap-0">
+              <CardContent className="flex flex-col gap-2.5 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                    {progress.percent}%
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {progress.stage}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-all duration-500 ease-out"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, progress.percent))}%`,
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {loading && !progress && streamTotal <= 1 && (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+              <span className="text-xs text-muted-foreground">음성 생성 중...</span>
+            </div>
+          )}
+
+          {error && !loading && (
+            <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+              <span className="text-xs text-destructive/80">{error}</span>
+            </div>
+          )}
+
+          {cancelled && !loading && !error && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <span className="text-xs text-amber-700 dark:text-amber-300">
+                중단되었습니다.
+              </span>
+            </div>
+          )}
+
+          {streamResults.length > 0 && !loading && (
+            <div className="flex flex-col gap-3">
+              {streamResults.map((item, i) => (
+                <Card
+                  key={`${item.result.audio_url}-${i}`}
+                  className="rounded-xl py-0 gap-0"
+                >
+                  <CardContent className="flex flex-col gap-2 p-4">
+                    <span className="text-xs text-muted-foreground">
+                      {item.text}
+                    </span>
+                    <AudioPlayer src={getAudioUrl(item.result.audio_url)} />
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  총 {streamResults.length}개 문장 · 처리{" "}
+                  {streamProcessingTime.toFixed(2)}초 ·{" "}
+                  {streamDuration.toFixed(2)}초 오디오
+                </span>
+              </div>
+            </div>
+          )}
+
+          {result && !loading && streamResults.length === 0 && (
+            <Card className="rounded-2xl py-0 gap-0">
+              <CardContent className="flex flex-col gap-4 p-5">
+                <AudioPlayer src={getAudioUrl(result.audio_url)} />
+                <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      처리 {result.processing_time_seconds}초
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Volume2 className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      {result.duration_seconds}초
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[11px] font-mono text-muted-foreground">
+                      {result.sample_rate / 1000}kHz
+                    </span>
+                  </div>
+                  {result.voice_cached && (
+                    <div className="flex items-center gap-1.5">
+                      <Zap className="h-3 w-3 text-amber-500 dark:text-amber-400" />
+                      <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400">
+                        캐시 사용
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </section>
 
-        {/* ─── Section 3.5: Text Queue ─── */}
+        {/* ─── Section 4: Text Queue ─── */}
 
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
-              3.5
+              4
             </span>
             <h2 className="text-sm font-semibold text-foreground">텍스트 큐</h2>
+            <span className="text-[10px] text-muted-foreground">고급</span>
             <Button
               variant="ghost"
               size="xs"
@@ -848,7 +1061,7 @@ export default function Home() {
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
-              4
+              5
             </span>
             <h2 className="text-sm font-semibold text-foreground">파라미터 설정</h2>
           </div>
@@ -859,183 +1072,25 @@ export default function Home() {
           />
         </section>
 
-        {/* ─── Section 5: Generate + Result ─── */}
+        {/* ─── Section 6: Vocal Analysis ─── */}
 
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-xs font-bold text-violet-500">
-                5
+                6
               </span>
-              <h2 className="text-sm font-semibold text-foreground">음성 생성</h2>
+              <h2 className="text-sm font-semibold text-foreground">음역대 분석</h2>
             </div>
-            <Button
-              onClick={
-                queueHasPending
-                  ? () => void processQueue()
-                  : () => void handleGenerate()
-              }
-              disabled={!canGenerate}
-              size="lg"
-              className="gap-2 rounded-xl px-6 bg-violet-500 text-white hover:bg-violet-400 active:scale-[0.98] disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
-            >
-              <Sparkles className="h-4 w-4" />
-              {loading ? "생성 중..." : generateLabel}
-              {!queueHasPending && textSentences.length > 1 && !loading && (
-                <Badge
-                  variant="outline"
-                  className="ml-1 rounded-full border-violet-500/30 bg-violet-500/10 text-[10px] text-violet-600 dark:text-violet-300"
-                >
-                  {textSentences.length}문장
-                </Badge>
-              )}
-            </Button>
-          </div>
-
-          {!loading && result?.voice_cached && (
-            <p className="text-[11px] text-muted-foreground">
-              💡 같은 음성으로 텍스트만 변경하여 빠르게 재생성 가능
+            <p className="ml-8 text-[11px] text-muted-foreground">
+              업로드한 음성의 음역대를 분석하고 맞는 노래를 추천합니다
             </p>
-          )}
-
-          {loading && streamTotal > 1 && (
-            <Card className="py-0 gap-0">
-              <CardContent className="flex flex-col gap-2.5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
-                    문장 {Math.min(streamIndex + 1, streamTotal)}/{streamTotal}{" "}
-                    생성 중...
-                  </span>
-                  <Button variant="ghost" size="xs" onClick={handleCancel}>
-                    중단
-                  </Button>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-all"
-                    style={{
-                      width: `${(streamIndex / streamTotal) * 100}%`,
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {loading && streamTotal <= 1 && progress && progress.percent >= 0 && (
-            <Card className="py-0 gap-0">
-              <CardContent className="flex flex-col gap-2.5 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
-                    {progress.percent}%
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {progress.stage}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-400 transition-all duration-500 ease-out"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, progress.percent))}%`,
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {loading && streamTotal <= 1 && progress && progress.percent === -1 && (
-            <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
-              <span className="text-xs text-destructive/80">{progress.stage}</span>
-            </div>
-          )}
-
-          {loading && !progress && streamTotal <= 1 && (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-              <span className="text-xs text-muted-foreground">음성 생성 중...</span>
-            </div>
-          )}
-
-          {error && !loading && (
-            <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
-              <span className="text-xs text-destructive/80">{error}</span>
-            </div>
-          )}
-
-          {cancelled && !loading && (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-              <span className="text-xs text-amber-700 dark:text-amber-300">
-                중단되었습니다.
-              </span>
-            </div>
-          )}
-
-          {streamResults.length > 0 && !loading && (
-            <div className="flex flex-col gap-3">
-              {streamResults.map((item, i) => (
-                <Card
-                  key={`${item.result.audio_url}-${i}`}
-                  className="rounded-xl py-0 gap-0"
-                >
-                  <CardContent className="flex flex-col gap-2 p-4">
-                    <span className="text-xs text-muted-foreground">
-                      {item.text}
-                    </span>
-                    <AudioPlayer src={getAudioUrl(item.result.audio_url)} />
-                  </CardContent>
-                </Card>
-              ))}
-              <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
-                <span className="text-[11px] font-mono text-muted-foreground">
-                  총 {streamResults.length}개 문장 · 처리{" "}
-                  {streamProcessingTime.toFixed(2)}초 ·{" "}
-                  {streamDuration.toFixed(2)}초 오디오
-                </span>
-              </div>
-            </div>
-          )}
-
-          {result && !loading && streamResults.length === 0 && (
-            <Card className="rounded-2xl py-0 gap-0">
-              <CardContent className="flex flex-col gap-4 p-5">
-                <AudioPlayer src={getAudioUrl(result.audio_url)} />
-
-                <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      처리 {result.processing_time_seconds}초
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Volume2 className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      {result.duration_seconds}초
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[11px] font-mono text-muted-foreground">
-                      {result.sample_rate / 1000}kHz
-                    </span>
-                  </div>
-                  {result.voice_cached && (
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="h-3 w-3 text-amber-500 dark:text-amber-400" />
-                      <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400">
-                        캐시 사용
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          </div>
+          <VocalAnalysisPanel
+            voiceId={voiceIds.length > 0 ? voiceIds[0] : undefined}
+            presetId={activePresetId ?? undefined}
+            disabled={!isVoiceReady}
+          />
         </section>
       </main>
 
@@ -1044,7 +1099,7 @@ export default function Home() {
       <footer className="border-t border-border/50 mt-12">
         <div className="mx-auto max-w-3xl px-6 py-6">
           <p className="text-xs text-muted-foreground/60 text-center">
-            {ENGINE_LABELS[activeEngine]} &middot; Zero-shot Voice Cloning
+            Voice Clone &middot; {ENGINE_LABELS[activeEngine]} &middot; 음성 하나로 누구의 목소리든
           </p>
         </div>
       </footer>

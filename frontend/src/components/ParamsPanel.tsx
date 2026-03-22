@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ChevronDown, RotateCcw } from "lucide-react";
+import { ChevronDown, RotateCcw, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,9 @@ export const DEFAULT_PARAMS: SynthesisParams = {
   top_p: 1.0,
   // Fish Speech
   chunk_length: 200,
+  // Voice concept
+  speed: 1.0,
+  pitch_semitones: 0,
 };
 
 export const FISH_SPEECH_DEFAULT_PARAMS: Partial<SynthesisParams> = {
@@ -98,6 +101,25 @@ const CHATTERBOX_SLIDERS: SliderConfig[] = [
   },
 ];
 
+const VOICE_CONCEPT_SLIDERS: SliderConfig[] = [
+  {
+    key: "speed",
+    label: "속도",
+    min: 0.5,
+    max: 2.0,
+    step: 0.05,
+    description: "말하기 속도 (1.0 = 원본)",
+  },
+  {
+    key: "pitch_semitones",
+    label: "피치",
+    min: -12,
+    max: 12,
+    step: 1,
+    description: "반음 단위 피치 조절 (0 = 원본)",
+  },
+];
+
 const FISH_SPEECH_SLIDERS: SliderConfig[] = [
   {
     key: "temperature",
@@ -163,8 +185,96 @@ export default function ParamsPanel({
     }
   }, [onChange, params, engineId]);
 
+  const hasConceptChange =
+    params.speed !== 1.0 || params.pitch_semitones !== 0;
+
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <div className="flex flex-col gap-3">
+      {/* ─── Voice Concept: Speed & Pitch ─── */}
+      <Card className="py-0 gap-0 overflow-hidden">
+        <div className="px-5 py-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Gauge className="h-4 w-4 text-violet-400" />
+            <span className="text-sm font-semibold text-foreground">
+              목소리 컨셉
+            </span>
+            {hasConceptChange && (
+              <span className="rounded-full bg-violet-500/10 border border-violet-500/30 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+                변형 적용됨
+              </span>
+            )}
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {VOICE_CONCEPT_SLIDERS.map((cfg) => {
+              const val = params[cfg.key];
+              const pct = ((val - cfg.min) / (cfg.max - cfg.min)) * 100;
+              const isDefault =
+                cfg.key === "speed" ? val === 1.0 : val === 0;
+
+              return (
+                <div key={cfg.key} className="flex flex-col gap-2">
+                  <div className="flex items-baseline justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-foreground">
+                        {cfg.label}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/60">
+                        {cfg.description}
+                      </span>
+                    </div>
+                    <span
+                      className={cn(
+                        "text-xs font-mono tabular-nums",
+                        isDefault
+                          ? "text-muted-foreground"
+                          : "text-violet-600 dark:text-violet-400",
+                      )}
+                    >
+                      {cfg.key === "speed"
+                        ? `${roundTo(val, cfg.step)}x`
+                        : `${val > 0 ? "+" : ""}${roundTo(val, cfg.step)}`}
+                    </span>
+                  </div>
+                  <div className="relative flex items-center h-5">
+                    <div className="absolute inset-x-0 h-1.5 rounded-full bg-muted" />
+                    <div
+                      className="absolute left-0 h-1.5 rounded-full bg-gradient-to-r from-violet-600 to-violet-400"
+                      style={{ width: `${pct}%` }}
+                    />
+                    <input
+                      type="range"
+                      min={cfg.min}
+                      max={cfg.max}
+                      step={cfg.step}
+                      value={val}
+                      onChange={(e) =>
+                        handleSliderChange(
+                          cfg.key,
+                          Number(e.target.value),
+                        )
+                      }
+                      className="relative z-10 h-5 w-full cursor-pointer appearance-none bg-transparent accent-violet-500 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-400 [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(139,92,246,0.5)] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-125 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-violet-400 [&::-moz-range-thumb]:shadow-[0_0_6px_rgba(139,92,246,0.5)] [&::-webkit-slider-runnable-track]:h-0 [&::-moz-range-track]:h-0"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {hasConceptChange && (
+            <button
+              onClick={() =>
+                onChange({ ...params, speed: 1.0, pitch_semitones: 0 })
+              }
+              className="mt-3 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              원본으로 초기화
+            </button>
+          )}
+        </div>
+      </Card>
+
+      {/* ─── Advanced Settings ─── */}
+      <Collapsible open={open} onOpenChange={setOpen}>
       <Card className="py-0 gap-0 overflow-hidden">
         <CollapsibleTrigger className="flex w-full items-center justify-between px-5 py-3.5 transition-colors hover:bg-muted/30">
           <span className="text-sm font-semibold text-foreground">
@@ -274,6 +384,7 @@ export default function ParamsPanel({
           </div>
         </CollapsibleContent>
       </Card>
-    </Collapsible>
+      </Collapsible>
+    </div>
   );
 }
