@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/jiwonkim/Desktop/kimjiwon/tts/backend/app\"}",
+  "error": "EISDIR: illegal operation on a directory, read '/Users/jiwonkim/Desktop/kimjiwon/tts/backend/app'",
+  "timestamp": "2026-03-22T13:41:50.496Z",
+  "retry_count": 1
+}

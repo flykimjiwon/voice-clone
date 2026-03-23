@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd /Users/jiwonkim/Desktop/kimjiwon/tts/backend && python -c \\\"import ast; ast.parse(open('app/routers/vocal.py').read()); print('OK')\\\"\",\"description\":\"Check Python syntax of vocal.py\"}",
+  "error": "Exit code 127\n(eval):1: command not found: python",
+  "timestamp": "2026-03-22T13:26:32.182Z",
+  "retry_count": 1
+}

@@ -335,6 +335,9 @@ export default function VoiceUploader({ onVoicesChanged }: VoiceUploaderProps) {
               </>
             )}
           </div>
+          <p className="text-center text-[11px] text-muted-foreground/60 mt-2">
+            또는 위 프리셋에서 기존 음성을 선택하세요
+          </p>
         </TabsContent>
 
         <TabsContent value="record">
@@ -446,6 +449,12 @@ export default function VoiceUploader({ onVoicesChanged }: VoiceUploaderProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {voices.length === 0 && (
+        <p className="text-center text-[10px] text-muted-foreground/60">
+          또는 위 프리셋에서 기존 음성을 선택하세요
+        </p>
+      )}
 
       {error && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-4 py-2.5">

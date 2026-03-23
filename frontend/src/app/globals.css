@@ -4,6 +4,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes slide-down-fade-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -49,6 +59,8 @@
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
+  background: linear-gradient(180deg, var(--background) 0%, var(--bg-gradient-end) 100%);
+  background-attachment: fixed;
 }
 
 ::selection {
@@ -75,6 +87,7 @@ body {
 
 :root {
   --background: oklch(1 0 0);
+  --bg-gradient-end: oklch(0.97 0.003 270);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -110,6 +123,7 @@ body {
 
 .dark {
   --background: oklch(0.145 0 0);
+  --bg-gradient-end: oklch(0.125 0.004 270);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -151,5 +165,6 @@ body {
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
 }
