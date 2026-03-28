@@ -514,7 +514,7 @@ def _ensure_wav(path: Path) -> Path:
     if wav_path.exists():
         return wav_path
     subprocess.run(
-        ["ffmpeg", "-y", "-i", str(path), "-ar", "22050", "-ac", "1", str(wav_path)],
+        ["ffmpeg", "-y", "-i", str(path), "-ar", str(OUTPUT_SAMPLE_RATE), "-ac", "1", str(wav_path)],
         capture_output=True,
         check=True,
     )
