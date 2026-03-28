@@ -3,6 +3,7 @@ import asyncio
 import json
 import subprocess
 import time
+import wave
 from pathlib import Path
 from typing import Optional
 from concurrent.futures import ThreadPoolExecutor
@@ -549,8 +550,6 @@ def _find_voice_files(voice_ids_str: str) -> list[Path]:
 
 def _get_audio_duration(path: Path) -> float:
     try:
-        import wave
-
         with wave.open(str(path), "r") as wf:
             return round(wf.getnframes() / float(wf.getframerate()), 2)
     except Exception:
