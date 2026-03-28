@@ -517,11 +517,16 @@ def _ensure_wav(path: Path) -> Path:
     wav_path = path.with_suffix(".wav")
     if wav_path.exists():
         return wav_path
-    subprocess.run(
-        ["ffmpeg", "-y", "-i", str(path), "-ar", str(OUTPUT_SAMPLE_RATE), "-ac", "1", str(wav_path)],
-        capture_output=True,
-        check=True,
-    )
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", str(path), "-ar", str(OUTPUT_SAMPLE_RATE), "-ac", "1", str(wav_path)],
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"오디오 변환 실패 ({path.name}): {e.stderr.decode()[:200]}"
+        ) from e
     return wav_path
 
 
