@@ -66,4 +66,5 @@ async def stream_logs():
 
 @app.get("/api/logs/recent")
 async def recent_logs(n: int = 50):
+    n = max(1, min(n, 500))
     return {"logs": log_buffer.recent(n)}
