@@ -396,6 +396,7 @@ async def save_voice_preset(
     try:
         await loop.run_in_executor(_executor, _run)
     except Exception as e:
+        _emit_log(engine_id, f"프리셋 저장 에러: {str(e)}", "ERROR")
         raise HTTPException(status_code=500, detail=str(e))
 
     metadata: dict = {
