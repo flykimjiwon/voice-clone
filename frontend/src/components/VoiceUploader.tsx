@@ -29,6 +29,12 @@ type RecordState = "idle" | "recording" | "recorded";
 const ACCEPT = ".wav,.mp3,.flac,.ogg,.m4a,.webm";
 const LS_KEY = "tts_voices";
 
+function formatTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 function saveVoices(voices: UploadVoiceResponse[]) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(voices)); } catch {}
 }
@@ -217,12 +223,6 @@ export default function VoiceUploader({ onVoicesChanged }: VoiceUploaderProps) {
     if (previewPlaying) { audio.pause(); } else { audio.play(); }
     setPreviewPlaying(!previewPlaying);
   }, [previewPlaying]);
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
 
   // ─── Render ───
 
