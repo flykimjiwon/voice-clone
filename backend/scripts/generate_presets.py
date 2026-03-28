@@ -126,35 +126,17 @@ def _load_manifest(manifest_path: Path) -> list[ManifestEntry]:
 def main() -> None:
     args = parse_args()
 
-    manifest_value = getattr(args, "manifest")
-    input_dir_value = getattr(args, "input_dir")
-    output_dir_value = getattr(args, "output_dir")
-    exaggeration_value = getattr(args, "exaggeration")
-    preview_text_value = getattr(args, "preview_text")
-    preview_lang_value = getattr(args, "preview_lang")
-    dry_run_value = getattr(args, "dry_run")
-    no_preview_value = getattr(args, "no_preview")
-
-    manifest_arg = str(manifest_value)
-    input_dir_arg = str(input_dir_value)
-    output_dir_arg = str(output_dir_value) if output_dir_value else None
-    exaggeration = float(exaggeration_value)
-    preview_text = str(preview_text_value)
-    preview_lang = str(preview_lang_value)
-    dry_run = bool(dry_run_value)
-    no_preview = bool(no_preview_value)
-
-    manifest_path = Path(manifest_arg)
+    manifest_path = Path(args.manifest)
     entries = _load_manifest(manifest_path)
-    input_dir = Path(input_dir_arg)
+    input_dir = Path(args.input_dir)
 
-    if output_dir_arg:
-        output_dir = Path(output_dir_arg)
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
     else:
         output_dir = Path(__file__).resolve().parent.parent / "voice_presets"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    if dry_run:
+    if args.dry_run:
         print(f"Dry run - validating {len(entries)} entries in manifest")
         found = 0
         for index, entry in enumerate(entries, start=1):
@@ -199,7 +181,7 @@ def main() -> None:
         preset_id = str(uuid.uuid4())
         pt_path = output_dir / f"{preset_id}.pt"
 
-        engine.prepare_voice(wav_path, exaggeration=exaggeration)
+        engine.prepare_voice(wav_path, exaggeration=args.exaggeration)
         engine.save_voice_embedding(pt_path)
 
         metadata = {
@@ -211,19 +193,19 @@ def main() -> None:
             "language": entry.get("language"),
             "description": entry.get("description"),
             "is_builtin": True,
-            "exaggeration": exaggeration,
+            "exaggeration": args.exaggeration,
             "created_at": time.time(),
         }
 
-        if not no_preview:
+        if not args.no_preview:
             preview_path = output_dir / f"{preset_id}_preview.wav"
             try:
                 engine.synthesize(
-                    preview_text,
+                    args.preview_text,
                     [],
-                    preview_lang,
+                    args.preview_lang,
                     preview_path,
-                    exaggeration=exaggeration,
+                    exaggeration=args.exaggeration,
                 )
                 metadata["preview_audio_url"] = (
                     f"/api/audio-preset-preview/{preset_id}_preview.wav"
