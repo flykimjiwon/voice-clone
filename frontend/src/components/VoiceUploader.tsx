@@ -80,6 +80,13 @@ export default function VoiceUploader({ onVoicesChanged }: VoiceUploaderProps) {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
   }, [previewUrl]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   // ─── Voice list management ───
 
   const addVoice = useCallback((v: UploadVoiceResponse) => {
