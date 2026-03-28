@@ -244,6 +244,8 @@ class FishSpeechEngine(TTSEngine):
             )
 
         # Save output WAV
+        if not resp.content:
+            raise RuntimeError("Fish Speech 서버가 빈 응답을 반환했습니다.")
         output_path.write_bytes(resp.content)
 
         # Apply speed/pitch post-processing if requested
