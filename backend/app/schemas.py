@@ -1,9 +1,12 @@
+from typing import Literal, Optional
+
 from pydantic import BaseModel
-from typing import Optional
+
+EngineId = Literal["chatterbox", "fish_speech"]
 
 
 class EngineStatusResponse(BaseModel):
-    engine_id: str = "chatterbox"
+    engine_id: EngineId = "chatterbox"
     available: bool
     name: str
     description: str
@@ -35,7 +38,7 @@ class VoicePresetResponse(BaseModel):
     id: str
     name: str
     created_at: float
-    engine_id: str = "chatterbox"
+    engine_id: EngineId = "chatterbox"
     gender: Optional[str] = None
     age_group: Optional[str] = None
     tone: Optional[str] = None
