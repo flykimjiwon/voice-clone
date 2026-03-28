@@ -12,6 +12,12 @@ import type {
   SongRecommendation,
 } from "@/lib/types";
 
+const DIFFICULTY_COLORS: Record<string, string> = {
+  "쉬움": "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  "보통": "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  "도전": "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
+};
+
 interface VocalAnalysisPanelProps {
   voiceId?: string;
   presetId?: string;
@@ -80,13 +86,6 @@ export default function VocalAnalysisPanel({
     [analysis],
   );
 
-  const difficultyColor = (d: string) => {
-    if (d === "쉬움")
-      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-    if (d === "보통")
-      return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
-    return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400";
-  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -253,7 +252,7 @@ export default function VocalAnalysisPanel({
                             variant="outline"
                             className={cn(
                               "rounded-full text-[9px] shrink-0",
-                              difficultyColor(song.difficulty),
+                              DIFFICULTY_COLORS[song.difficulty],
                             )}
                           >
                             {song.difficulty}
