@@ -4,8 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Trash2, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { API_BASE } from "@/lib/api";
 
 interface LogEntry {
   ts: number;
