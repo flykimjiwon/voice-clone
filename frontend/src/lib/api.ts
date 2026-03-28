@@ -13,18 +13,24 @@ import type {
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+async function handleResponse<T>(res: Response, fallbackMsg: string): Promise<T> {
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || fallbackMsg);
+  }
+  return res.json();
+}
+
 export async function fetchEngineStatus(
   engineId: EngineId = "chatterbox",
 ): Promise<EngineStatus> {
   const res = await fetch(`${API_BASE}/api/engine?engine_id=${engineId}`);
-  if (!res.ok) throw new Error("엔진 상태를 가져올 수 없습니다.");
-  return res.json();
+  return handleResponse<EngineStatus>(res, "엔진 상태를 가져올 수 없습니다.");
 }
 
 export async function fetchAllEngines(): Promise<EngineListResponse> {
   const res = await fetch(`${API_BASE}/api/engines`);
-  if (!res.ok) throw new Error("엔진 목록을 가져올 수 없습니다.");
-  return res.json();
+  return handleResponse<EngineListResponse>(res, "엔진 목록을 가져올 수 없습니다.");
 }
 
 export async function uploadVoice(file: File): Promise<UploadVoiceResponse> {
@@ -36,12 +42,7 @@ export async function uploadVoice(file: File): Promise<UploadVoiceResponse> {
     body: form,
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음성 업로드에 실패했습니다.");
-  }
-
-  return res.json();
+  return handleResponse<UploadVoiceResponse>(res, "음성 업로드에 실패했습니다.");
 }
 
 export async function prepareVoice(
@@ -61,12 +62,7 @@ export async function prepareVoice(
     body: form,
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음성 준비에 실패했습니다.");
-  }
-
-  return res.json();
+  return handleResponse<PrepareVoiceResponse>(res, "음성 준비에 실패했습니다.");
 }
 
 export async function synthesize(
@@ -98,12 +94,7 @@ export async function synthesize(
     body: form,
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음성 합성에 실패했습니다.");
-  }
-
-  return res.json();
+  return handleResponse<SynthesizeResponse>(res, "음성 합성에 실패했습니다.");
 }
 
 export async function fetchVoicePresets(
@@ -119,8 +110,7 @@ export async function fetchVoicePresets(
   const res = await fetch(
     `${API_BASE}/api/voice-presets${query ? `?${query}` : ""}`,
   );
-  if (!res.ok) throw new Error("음성 프리셋 목록을 가져올 수 없습니다.");
-  const data = await res.json();
+  const data = await handleResponse<{ presets: VoicePreset[] }>(res, "음성 프리셋 목록을 가져올 수 없습니다.");
   return data.presets;
 }
 
@@ -137,12 +127,7 @@ export async function saveVoicePreset(
     body: form,
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음성 프리셋 저장에 실패했습니다.");
-  }
-
-  return res.json();
+  return handleResponse<VoicePreset>(res, "음성 프리셋 저장에 실패했습니다.");
 }
 
 export async function loadVoicePreset(presetId: string): Promise<void> {
@@ -150,10 +135,7 @@ export async function loadVoicePreset(presetId: string): Promise<void> {
     method: "POST",
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음성 프리셋 로드에 실패했습니다.");
-  }
+  await handleResponse(res, "음성 프리셋 로드에 실패했습니다.");
 }
 
 export async function deleteVoicePreset(presetId: string): Promise<void> {
@@ -161,10 +143,7 @@ export async function deleteVoicePreset(presetId: string): Promise<void> {
     method: "DELETE",
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음성 프리셋 삭제에 실패했습니다.");
-  }
+  await handleResponse(res, "음성 프리셋 삭제에 실패했습니다.");
 }
 
 export function getAudioUrl(path: string): string {
@@ -183,12 +162,7 @@ export async function analyzeVocalRange(
 
   const res = await fetch(`${API_BASE}/api/vocal/analyze?${params}`);
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "음역대 분석에 실패했습니다.");
-  }
-
-  return res.json();
+  return handleResponse<VocalAnalysisResponse>(res, "음역대 분석에 실패했습니다.");
 }
 
 export async function getSongRecommendations(
@@ -204,10 +178,5 @@ export async function getSongRecommendations(
 
   const res = await fetch(`${API_BASE}/api/vocal/songs?${params}`);
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "노래 추천을 가져올 수 없습니다.");
-  }
-
-  return res.json();
+  return handleResponse<SongRecommendationResponse>(res, "노래 추천을 가져올 수 없습니다.");
 }
