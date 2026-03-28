@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import threading
 import time
 from collections import deque
 
@@ -10,6 +11,7 @@ class LogBuffer:
         self._lines: deque[dict] = deque(maxlen=maxlen)
         self._subscribers: list[asyncio.Queue] = []
         self._lock = asyncio.Lock()
+        self._thread_lock = threading.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
 
     def set_loop(self, loop: asyncio.AbstractEventLoop):
@@ -41,7 +43,8 @@ class LogBuffer:
             "level": level,
             "msg": line.rstrip(),
         }
-        self._lines.append(entry)
+        with self._thread_lock:
+            self._lines.append(entry)
         if self._loop and self._loop.is_running():
             self._loop.call_soon_threadsafe(
                 asyncio.ensure_future,
@@ -62,7 +65,8 @@ class LogBuffer:
                 self._subscribers.remove(q)
 
     def recent(self, n: int = 50) -> list[dict]:
-        return list(self._lines)[-n:]
+        with self._thread_lock:
+            return list(self._lines)[-n:]
 
 
 log_buffer = LogBuffer()
