@@ -33,7 +33,7 @@ CHATTERBOX_LANG_MAP = {
 
 
 def _file_hash(path: Path) -> str:
-    h = hashlib.md5()
+    h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)

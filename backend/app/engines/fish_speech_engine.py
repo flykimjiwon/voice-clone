@@ -100,7 +100,7 @@ class FishSpeechEngine(TTSEngine):
         with open(speaker_wav, "rb") as f:
             audio_bytes = f.read()
 
-        new_hash = hashlib.md5(audio_bytes + transcript.encode()).hexdigest()
+        new_hash = hashlib.sha256(audio_bytes + transcript.encode()).hexdigest()
         if new_hash == self._reference_hash:
             return False  # cache hit
 
@@ -150,7 +150,7 @@ class FishSpeechEngine(TTSEngine):
             if transcript_path.exists()
             else ""
         )
-        self._reference_hash = hashlib.md5(
+        self._reference_hash = hashlib.sha256(
             self._reference_audio + self._reference_text.encode()
         ).hexdigest()
 
