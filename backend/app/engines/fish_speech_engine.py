@@ -9,6 +9,7 @@ from pathlib import Path
 import requests as _requests
 
 from .base import TTSEngine
+from ..config import FISH_SPEECH_HEALTH_TIMEOUT, FISH_SPEECH_SYNTH_TIMEOUT
 
 FISH_SPEECH_LANG_MAP = {
     "ko": "ko",
@@ -67,7 +68,7 @@ class FishSpeechEngine(TTSEngine):
 
     def is_available(self) -> bool:
         try:
-            resp = _requests.get(f"{self._server_url}/v1/health", timeout=3)
+            resp = _requests.get(f"{self._server_url}/v1/health", timeout=FISH_SPEECH_HEALTH_TIMEOUT)
             if resp.status_code == 200:
                 self._error = None
                 return True
@@ -229,7 +230,7 @@ class FishSpeechEngine(TTSEngine):
             f"{self._server_url}/v1/tts",
             data=content,
             headers=headers,
-            timeout=300,
+            timeout=FISH_SPEECH_SYNTH_TIMEOUT,
         )
         resp.raise_for_status()
 
