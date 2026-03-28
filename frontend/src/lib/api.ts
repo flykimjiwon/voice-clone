@@ -1,7 +1,6 @@
 import type {
   EngineId,
   EngineStatus,
-  EngineListResponse,
   SynthesizeResponse,
   SynthesisParams,
   UploadVoiceResponse,
@@ -26,11 +25,6 @@ export async function fetchEngineStatus(
 ): Promise<EngineStatus> {
   const res = await fetch(`${API_BASE}/api/engine?engine_id=${engineId}`);
   return handleResponse<EngineStatus>(res, "엔진 상태를 가져올 수 없습니다.");
-}
-
-export async function fetchAllEngines(): Promise<EngineListResponse> {
-  const res = await fetch(`${API_BASE}/api/engines`);
-  return handleResponse<EngineListResponse>(res, "엔진 목록을 가져올 수 없습니다.");
 }
 
 export async function uploadVoice(file: File): Promise<UploadVoiceResponse> {
