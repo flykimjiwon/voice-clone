@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/vocal", tags=["vocal"])
 
 # ─── Musical note helpers ───
 
-NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+NOTE_NAMES = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
 
 
 def hz_to_note(freq: float) -> str:
