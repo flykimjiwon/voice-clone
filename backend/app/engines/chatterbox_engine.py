@@ -1,8 +1,11 @@
 import hashlib
+import logging
 import time
 from pathlib import Path
 
 from .base import TTSEngine
+
+logger = logging.getLogger(__name__)
 
 CHATTERBOX_LANG_MAP = {
     "ko": "ko",
@@ -201,7 +204,10 @@ class ChatterboxEngine(TTSEngine):
                 self._prepared_hash = voice_hash
                 voice_cached = False
 
-        lang_id = CHATTERBOX_LANG_MAP.get(language, "en")
+        lang_id = CHATTERBOX_LANG_MAP.get(language)
+        if lang_id is None:
+            logger.warning("Unsupported language '%s', falling back to 'en'", language)
+            lang_id = "en"
 
         # audio_prompt_path=None — always use cached conds from prepare_conditionals
         wav = self._model.generate(
