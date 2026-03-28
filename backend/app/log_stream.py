@@ -10,14 +10,12 @@ class LogBuffer:
         self._lines: deque[dict] = deque(maxlen=maxlen)
         self._subscribers: list[asyncio.Queue] = []
         self._lock = asyncio.Lock()
+        self._loop: asyncio.AbstractEventLoop | None = None
 
-    async def push(self, line: str, level: str = "INFO"):
-        entry = {
-            "ts": time.time(),
-            "level": level,
-            "msg": line.rstrip(),
-        }
-        self._lines.append(entry)
+    def set_loop(self, loop: asyncio.AbstractEventLoop):
+        self._loop = loop
+
+    async def _notify_subscribers(self, entry: dict):
         async with self._lock:
             dead = []
             for q in self._subscribers:
@@ -28,6 +26,15 @@ class LogBuffer:
             for q in dead:
                 self._subscribers.remove(q)
 
+    async def push(self, line: str, level: str = "INFO"):
+        entry = {
+            "ts": time.time(),
+            "level": level,
+            "msg": line.rstrip(),
+        }
+        self._lines.append(entry)
+        await self._notify_subscribers(entry)
+
     def push_sync(self, line: str, level: str = "INFO"):
         entry = {
             "ts": time.time(),
@@ -35,6 +42,11 @@ class LogBuffer:
             "msg": line.rstrip(),
         }
         self._lines.append(entry)
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                asyncio.ensure_future,
+                self._notify_subscribers(entry),
+            )
 
     async def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue(maxsize=200)
@@ -151,6 +163,7 @@ def install_log_capture():
 
 
 def set_event_loop(loop: asyncio.AbstractEventLoop):
+    log_buffer.set_loop(loop)
     _handler.set_loop(loop)
     _stdout_capture.set_loop(loop)
     _stderr_capture.set_loop(loop)
