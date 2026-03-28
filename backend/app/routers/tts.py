@@ -236,6 +236,11 @@ async def synthesize(
     speed: float = Form(1.0),
     pitch_semitones: float = Form(0.0),
 ):
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="텍스트가 비어 있습니다.")
+    if len(text) > 5000:
+        raise HTTPException(status_code=400, detail="텍스트가 너무 깁니다. (최대 5000자)")
+
     engine = _get_engine(engine_id)
     if not engine.is_available():
         raise HTTPException(
@@ -469,7 +474,9 @@ async def delete_voice_preset(preset_id: str):
 
 @router.get("/audio/{filename}")
 async def get_audio(filename: str):
-    file_path = OUTPUT_DIR / filename
+    file_path = (OUTPUT_DIR / filename).resolve()
+    if not str(file_path).startswith(str(OUTPUT_DIR.resolve())):
+        raise HTTPException(status_code=400, detail="잘못된 파일 경로입니다.")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="오디오 파일을 찾을 수 없습니다.")
     return FileResponse(str(file_path), media_type="audio/wav")
