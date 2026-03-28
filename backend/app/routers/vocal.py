@@ -35,14 +35,14 @@ def hz_to_midi(freq: float) -> float:
 
 # ─── Vocal range classification ───
 
-VOICE_TYPES = [
+VOICE_TYPES = (
     {"type": "베이스 (Bass)", "gender": "male", "low_hz": 82, "high_hz": 330},
     {"type": "바리톤 (Baritone)", "gender": "male", "low_hz": 98, "high_hz": 392},
     {"type": "테너 (Tenor)", "gender": "male", "low_hz": 131, "high_hz": 523},
     {"type": "알토 (Alto)", "gender": "female", "low_hz": 175, "high_hz": 698},
     {"type": "메조소프라노 (Mezzo)", "gender": "female", "low_hz": 196, "high_hz": 880},
     {"type": "소프라노 (Soprano)", "gender": "female", "low_hz": 262, "high_hz": 1047},
-]
+)
 
 
 def classify_voice_type(low_hz: float, high_hz: float) -> list[dict]:
@@ -72,7 +72,7 @@ def classify_voice_type(low_hz: float, high_hz: float) -> list[dict]:
 
 # ─── Song database ───
 
-SONG_DB = [
+SONG_DB = (
     # Korean songs
     {"title": "사랑했지만", "artist": "김광석", "low_hz": 131, "high_hz": 440, "language": "ko", "genre": "발라드"},
     {"title": "거리에서", "artist": "성시경", "low_hz": 131, "high_hz": 494, "language": "ko", "genre": "발라드"},
@@ -105,7 +105,7 @@ SONG_DB = [
     {"title": "Creep", "artist": "Radiohead", "low_hz": 131, "high_hz": 440, "language": "en", "genre": "Rock"},
     {"title": "Fly Me to the Moon", "artist": "Frank Sinatra", "low_hz": 131, "high_hz": 392, "language": "en", "genre": "Jazz"},
     {"title": "Thinking Out Loud", "artist": "Ed Sheeran", "low_hz": 131, "high_hz": 494, "language": "en", "genre": "Pop"},
-]
+)
 
 
 def recommend_songs(low_hz: float, high_hz: float, language: str | None = None) -> list[dict]:
