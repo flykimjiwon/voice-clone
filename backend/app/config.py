@@ -11,7 +11,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 VOICE_PRESETS_DIR.mkdir(exist_ok=True)
 
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024
-ALLOWED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".webm"}
+ALLOWED_AUDIO_EXTENSIONS = frozenset({".wav", ".mp3", ".flac", ".ogg", ".m4a", ".webm"})
 
 OUTPUT_SAMPLE_RATE = 22050
 
