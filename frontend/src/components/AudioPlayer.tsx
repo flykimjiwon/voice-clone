@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { memo, useRef, useState, useEffect, useCallback } from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -9,19 +9,19 @@ interface AudioPlayerProps {
   label?: string;
 }
 
-export default function AudioPlayer({ src, label }: AudioPlayerProps) {
+function formatTime(t: number) {
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function AudioPlayer({ src, label }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
-
-  const formatTime = (t: number) => {
-    const m = Math.floor(t / 60);
-    const s = Math.floor(t % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -140,3 +140,5 @@ export default function AudioPlayer({ src, label }: AudioPlayerProps) {
     </div>
   );
 }
+
+export default memo(AudioPlayer);
