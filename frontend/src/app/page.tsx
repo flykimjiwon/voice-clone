@@ -56,9 +56,9 @@ const LANGUAGES = [
   { code: "es", label: "Español" },
   { code: "fr", label: "Français" },
   { code: "de", label: "Deutsch" },
-];
+] as const;
 
-const SAMPLE_TEXTS: Record<string, string> = {
+const SAMPLE_TEXTS: Readonly<Record<string, string>> = {
   ko: "안녕하세요. 이것은 음성 합성 테스트입니다. 음성 클론의 음질과 자연스러움을 확인해 보세요.",
   en: "Hello. This is a voice synthesis test. Check the quality and naturalness of the voice clone.",
   "zh-cn": "你好。这是一个语音合成测试。请检查语音克隆的音质和自然度。",
@@ -68,7 +68,7 @@ const SAMPLE_TEXTS: Record<string, string> = {
   de: "Hallo. Dies ist ein Sprachsynthesetest. Überprüfen Sie die Qualität und Natürlichkeit des Stimmklons.",
 };
 
-const ENGINE_LABELS: Record<EngineId, string> = {
+const ENGINE_LABELS: Readonly<Record<EngineId, string>> = {
   chatterbox: "Chatterbox",
   fish_speech: "Fish Audio S2",
 };
