@@ -6,8 +6,11 @@ import time
 from collections import deque
 
 
+from .config import LOG_BUFFER_MAXLEN
+
+
 class LogBuffer:
-    def __init__(self, maxlen: int = 500):
+    def __init__(self, maxlen: int = LOG_BUFFER_MAXLEN):
         self._lines: deque[dict] = deque(maxlen=maxlen)
         self._subscribers: list[asyncio.Queue] = []
         self._lock = asyncio.Lock()
