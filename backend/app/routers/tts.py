@@ -413,7 +413,7 @@ async def save_voice_preset(
         if val is not None:
             metadata[key] = val
 
-    meta_path.write_text(json.dumps(metadata, ensure_ascii=False))
+    meta_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2))
 
     _emit_log(engine_id, f"음성 프리셋 저장: {name}")
     return VoicePresetResponse(**metadata)
