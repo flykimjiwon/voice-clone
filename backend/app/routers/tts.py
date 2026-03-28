@@ -477,8 +477,8 @@ async def delete_voice_preset(preset_id: str):
             )
     except HTTPException:
         raise
-    except Exception:
-        pass
+    except Exception as e:
+        _emit_log("chatterbox", f"프리셋 메타데이터 읽기 실패: {e}", "WARNING")
 
     # Use engine-specific delete (handles different file formats per engine)
     engine = _engines.get(engine_id)
