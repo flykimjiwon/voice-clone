@@ -438,13 +438,13 @@ export default function Home() {
     : textSentences.length > 1
       ? "스트리밍 생성"
       : "음성 생성";
-  const streamProcessingTime = streamResults.reduce(
-    (acc, item) => acc + item.result.processing_time_seconds,
-    0,
+  const streamProcessingTime = useMemo(
+    () => streamResults.reduce((acc, item) => acc + item.result.processing_time_seconds, 0),
+    [streamResults],
   );
-  const streamDuration = streamResults.reduce(
-    (acc, item) => acc + item.result.duration_seconds,
-    0,
+  const streamDuration = useMemo(
+    () => streamResults.reduce((acc, item) => acc + item.result.duration_seconds, 0),
+    [streamResults],
   );
 
   return (
