@@ -246,6 +246,12 @@ async def synthesize(
         raise HTTPException(status_code=400, detail="텍스트가 비어 있습니다.")
     if len(text) > 5000:
         raise HTTPException(status_code=400, detail="텍스트가 너무 깁니다. (최대 5000자)")
+    if not (0.0 <= exaggeration <= 5.0):
+        raise HTTPException(status_code=400, detail="exaggeration은 0~5 범위여야 합니다.")
+    if not (0.0 < temperature <= 5.0):
+        raise HTTPException(status_code=400, detail="temperature는 0 초과 5 이하여야 합니다.")
+    if not (0.1 <= speed <= 3.0):
+        raise HTTPException(status_code=400, detail="speed는 0.1~3.0 범위여야 합니다.")
 
     engine = _get_engine(engine_id)
     if not engine.is_available():
