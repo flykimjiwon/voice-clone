@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
-from .config import CORS_ORIGINS
+from .config import CORS_ORIGINS, SSE_PING_TIMEOUT
 from .routers.tts import router as tts_router
 from .routers.vocal import router as vocal_router
 from .log_stream import log_buffer, install_log_capture, set_event_loop
@@ -52,7 +52,7 @@ async def stream_logs():
         try:
             while True:
                 try:
-                    entry = await asyncio.wait_for(queue.get(), timeout=30)
+                    entry = await asyncio.wait_for(queue.get(), timeout=SSE_PING_TIMEOUT)
                     yield {"data": json.dumps(entry, ensure_ascii=False)}
                 except asyncio.TimeoutError:
                     yield {"event": "ping", "data": ""}
