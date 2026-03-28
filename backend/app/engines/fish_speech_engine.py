@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import time
+import wave
 from pathlib import Path
 
 import requests as _requests
@@ -264,8 +265,6 @@ class FishSpeechEngine(TTSEngine):
         # Calculate duration
         duration = 0.0
         try:
-            import wave
-
             with wave.open(str(output_path), "r") as wf:
                 sample_rate = wf.getframerate()
                 duration = wf.getnframes() / float(sample_rate)
