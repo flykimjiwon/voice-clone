@@ -17,6 +17,7 @@ from ..config import (
     ALLOWED_AUDIO_EXTENSIONS,
     FISH_SPEECH_URL,
     MAX_UPLOAD_SIZE,
+    OUTPUT_SAMPLE_RATE,
 )
 from ..schemas import (
     EngineStatusResponse,
@@ -197,7 +198,7 @@ async def upload_voice(file: UploadFile = File(...)):
                     "-i",
                     str(raw_path),
                     "-ar",
-                    "22050",
+                    str(OUTPUT_SAMPLE_RATE),
                     "-ac",
                     "1",
                     str(wav_path),
