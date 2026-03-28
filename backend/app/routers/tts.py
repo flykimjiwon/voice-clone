@@ -370,6 +370,11 @@ async def save_voice_preset(
     description: Optional[str] = Form(None),
     exaggeration_val: Optional[float] = Form(None),
 ):
+    if not name or not name.strip():
+        raise HTTPException(status_code=400, detail="프리셋 이름이 비어 있습니다.")
+    if len(name) > 100:
+        raise HTTPException(status_code=400, detail="프리셋 이름이 너무 깁니다. (최대 100자)")
+
     engine = _get_engine(engine_id)
     if not engine.voice_prepared:
         raise HTTPException(
