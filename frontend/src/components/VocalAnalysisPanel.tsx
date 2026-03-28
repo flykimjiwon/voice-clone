@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { memo, useState, useCallback } from "react";
 import { Music, Loader2, BarChart3, Star, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ interface VocalAnalysisPanelProps {
   disabled?: boolean;
 }
 
-export default function VocalAnalysisPanel({
+function VocalAnalysisPanel({
   voiceId,
   presetId,
   disabled,
@@ -310,3 +310,5 @@ export default function VocalAnalysisPanel({
     </div>
   );
 }
+
+export default memo(VocalAnalysisPanel);
