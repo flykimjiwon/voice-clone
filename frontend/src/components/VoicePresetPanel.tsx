@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, Fragment } from "react";
+import { memo, useState, useEffect, useCallback, useRef, Fragment } from "react";
 import { Mic2, Save, Trash2, Archive, Loader2, Play, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ function formatDate(ts: number): string {
   return `${mm}/${dd} ${hh}:${mi}`;
 }
 
-export default function VoicePresetPanel({
+function VoicePresetPanel({
   canSave,
   activePresetId,
   onPresetLoaded,
@@ -347,3 +347,5 @@ export default function VoicePresetPanel({
     </div>
   );
 }
+
+export default memo(VoicePresetPanel);
