@@ -18,6 +18,7 @@ from ..config import (
     FISH_SPEECH_URL,
     MAX_UPLOAD_SIZE,
     OUTPUT_SAMPLE_RATE,
+    TTS_EXECUTOR_WORKERS,
 )
 from ..schemas import (
     EngineStatusResponse,
@@ -38,7 +39,7 @@ _engines: dict[str, TTSEngine] = {
     "chatterbox": ChatterboxEngine(),
     "fish_speech": FishSpeechEngine(server_url=FISH_SPEECH_URL),
 }
-_executor = ThreadPoolExecutor(max_workers=2)
+_executor = ThreadPoolExecutor(max_workers=TTS_EXECUTOR_WORKERS)
 
 
 def _get_engine(engine_id: str) -> TTSEngine:
