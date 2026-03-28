@@ -114,6 +114,9 @@ async def prepare_voice(
     exaggeration: float = Form(0.5),
     transcript: str = Form(""),
 ):
+    if not (0.0 <= exaggeration <= 5.0):
+        raise HTTPException(status_code=400, detail="exaggeration은 0~5 범위여야 합니다.")
+
     engine = _get_engine(engine_id)
     if not engine.is_available():
         raise HTTPException(
