@@ -226,13 +226,22 @@ class FishSpeechEngine(TTSEngine):
             content = json.dumps(request_data).encode("utf-8")
             headers["Content-Type"] = "application/json"
 
-        resp = _requests.post(
-            f"{self._server_url}/v1/tts",
-            data=content,
-            headers=headers,
-            timeout=FISH_SPEECH_SYNTH_TIMEOUT,
-        )
-        resp.raise_for_status()
+        try:
+            resp = _requests.post(
+                f"{self._server_url}/v1/tts",
+                data=content,
+                headers=headers,
+                timeout=FISH_SPEECH_SYNTH_TIMEOUT,
+            )
+            resp.raise_for_status()
+        except _requests.exceptions.Timeout:
+            raise RuntimeError(
+                f"Fish Speech 서버 응답 시간 초과 ({FISH_SPEECH_SYNTH_TIMEOUT}초)"
+            )
+        except _requests.exceptions.ConnectionError:
+            raise RuntimeError(
+                f"Fish Speech 서버에 연결할 수 없습니다 ({self._server_url})"
+            )
 
         # Save output WAV
         output_path.write_bytes(resp.content)
