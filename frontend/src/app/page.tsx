@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Waves,
   Sparkles,
@@ -267,7 +267,7 @@ export default function Home() {
     setStreamMode(splitSentences(text).length > 1);
   }, [text]);
 
-  const textSentences = splitSentences(text);
+  const textSentences = useMemo(() => splitSentences(text), [text]);
   const queueHasPending = queue.some((item) => item.status === "pending");
   const queueIsGenerating = queue.some((item) => item.status === "generating");
   const canStart =
