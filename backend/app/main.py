@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
+from .config import CORS_ORIGINS
 from .routers.tts import router as tts_router
 from .routers.vocal import router as vocal_router
 from .log_stream import log_buffer, install_log_capture, set_event_loop
@@ -24,7 +25,7 @@ app = FastAPI(title="TTS Comparison API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

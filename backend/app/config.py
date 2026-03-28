@@ -17,5 +17,9 @@ OUTPUT_SAMPLE_RATE = 22050
 
 # Fish Speech API server URL (can be overridden via env var)
 FISH_SPEECH_URL = os.environ.get("FISH_SPEECH_URL", "http://localhost:8080")
+
+CORS_ORIGINS = os.environ.get(
+    "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
 FISH_SPEECH_HEALTH_TIMEOUT = 2
 FISH_SPEECH_SYNTH_TIMEOUT = 300
