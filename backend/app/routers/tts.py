@@ -207,6 +207,7 @@ async def upload_voice(file: UploadFile = File(...)):
             )
             raw_path.unlink(missing_ok=True)
         except subprocess.CalledProcessError as e:
+            raw_path.unlink(missing_ok=True)
             raise HTTPException(
                 status_code=500,
                 detail=f"오디오 변환 실패: {e.stderr.decode()[:200]}",
