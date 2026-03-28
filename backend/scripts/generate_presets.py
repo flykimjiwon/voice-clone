@@ -44,43 +44,43 @@ MetadataValue = str | bool | float | None
 # ─── CLI args ───
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Batch voice preset generator")
-    _ = parser.add_argument(
+    parser.add_argument(
         "--input-dir",
         required=True,
         help="Directory containing source WAV files referenced by manifest",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--output-dir",
         default=None,
         help="Output directory for generated preset files (defaults to ../voice_presets)",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--manifest",
         required=True,
         help="JSON manifest file with preset source entries",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--exaggeration",
         type=float,
         default=0.5,
         help="Exaggeration value used during voice preparation",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--preview-text",
         default="안녕하세요. 이것은 음성 프리셋 미리듣기입니다.",
         help="Text used to generate preset preview audio",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--preview-lang",
         default="ko",
         help="Language code used for preview synthesis",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate manifest and input files without loading TTS model",
     )
-    _ = parser.add_argument(
+    parser.add_argument(
         "--no-preview",
         action="store_true",
         help="Skip preview audio generation",
@@ -199,7 +199,7 @@ def main() -> None:
         preset_id = str(uuid.uuid4())
         pt_path = output_dir / f"{preset_id}.pt"
 
-        _ = engine.prepare_voice(wav_path, exaggeration=exaggeration)
+        engine.prepare_voice(wav_path, exaggeration=exaggeration)
         engine.save_voice_embedding(pt_path)
 
         metadata = {
@@ -218,7 +218,7 @@ def main() -> None:
         if not no_preview:
             preview_path = output_dir / f"{preset_id}_preview.wav"
             try:
-                _ = engine.synthesize(
+                engine.synthesize(
                     preview_text,
                     [],
                     preview_lang,
@@ -232,7 +232,7 @@ def main() -> None:
                 print(f"  WARNING: Preview generation failed: {exc}")
 
         meta_path = output_dir / f"{preset_id}.json"
-        _ = meta_path.write_text(
+        meta_path.write_text(
             json.dumps(metadata, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
@@ -240,7 +240,7 @@ def main() -> None:
         print(f"  -> Saved: {pt_path.name}")
 
     builtin_manifest_path = output_dir / "builtin_manifest.json"
-    _ = builtin_manifest_path.write_text(
+    builtin_manifest_path.write_text(
         json.dumps(builtin_metadata, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
