@@ -108,7 +108,6 @@ SONG_DB = [
 def recommend_songs(low_hz: float, high_hz: float, language: str | None = None) -> list[dict]:
     """Find songs that fit within the user's vocal range."""
     results = []
-    user_range_semitones = 12 * math.log2(high_hz / low_hz) if low_hz > 0 and high_hz > low_hz else 0
 
     for song in SONG_DB:
         if language and song["language"] != language:
@@ -129,7 +128,6 @@ def recommend_songs(low_hz: float, high_hz: float, language: str | None = None) 
         coverage = overlap / song_range
 
         # Determine difficulty
-        song_semitones = 12 * math.log2(song_high / song_low) if song_low > 0 else 0
         if coverage >= 0.95:
             difficulty = "쉬움"
         elif coverage >= 0.75:
