@@ -1,0 +1,62 @@
+commit	lint_errors	build_ok	status	description
+0ae7615	3	true	baseline	initial state: 3 lint errors (1 unused import, 2 unused vars), build passes
+7fc9c9c	0	true	keep	remove unused import (io) and unused variables (user_range_semitones, song_semitones)
+8c29af3	0	true	keep	add path traversal guard on audio endpoint + text length validation on synthesize
+c7a027c	0	true	keep	memo AudioPlayer component, extract formatTime as pure function
+5edcc6c	0	true	keep	enforce MAX_UPLOAD_SIZE (50MB) on voice upload endpoint
+11934c7	0	true	keep	replace deprecated on_event("startup") with lifespan context manager
+1c3cc24	0	true	keep	extract handleResponse helper, deduplicate 11 error handling blocks in api.ts (-31 lines)
+d21fe0a	0	true	keep	add parameter range validation (exaggeration, temperature, speed) on synthesize
+49d6049	0	true	keep	fix push_sync to notify SSE subscribers via event loop (engine progress now streams)
+f2d0d12	0	true	keep	extract formatTime out of VoiceUploader component body
+a588ba9	0	true	keep	consolidate duplicate post_process_audio into TTSEngine base class (-14 lines)
+759ab09	0	true	keep	move asyncio import to module level in vocal.py
+afa5526	0	true	keep	remove duplicate API_BASE definition in ServerLogModal, import from api.ts
+b1c2216	0	true	keep	extract Fish Speech timeout constants to config (health: 2s, synth: 300s)
+5a016f8	0	true	keep	replace MD5 with SHA256 for file/audio hashing in both engines
+19edded	0	true	keep	remove redundant sys import alias in generate_presets.py
+b93cafe	0	true	keep	extract difficultyColor to static DIFFICULTY_COLORS map in VocalAnalysisPanel
+0419677	0	true	keep	add exaggeration range validation to prepare-voice endpoint
+6dabb01	0	true	keep	wrap VoicePresetPanel with React.memo to prevent unnecessary re-renders
+623c0a3	0	true	keep	fix language param type hint to Optional[str] in songs endpoint
+5166926	0	true	keep	wrap ParamsPanel with React.memo
+d47047a	0	true	keep	extract CORS_ORIGINS to config with env var override
+102c565	0	true	keep	enrich health endpoint with engine availability status
+2671f0c	0	true	keep	clamp recent_logs n param to 1-500 range
+6333872	0	true	keep	wrap VocalAnalysisPanel with React.memo
+7f499af	0	true	keep	add preset name validation (empty check + 100 char limit)
+c924707	0	true	keep	extract SSE_PING_TIMEOUT to config
+c43d753	0	true	keep	cleanup raw file on ffmpeg conversion failure in upload_voice
+83a4269	0	true	keep	add threading.Lock for thread-safe deque access in LogBuffer
+eebbe52	0	true	keep	wrap ServerLogModal with React.memo
+7adf6b4	0	true	keep	pretty-print preset metadata JSON with indent=2
+7f52c47	0	true	keep	memoize textSentences computation with useMemo in page.tsx
+548f244	0	true	keep	add explicit Timeout/ConnectionError handling in Fish Speech synthesize
+4dec30c	0	true	keep	use OUTPUT_SAMPLE_RATE config instead of hardcoded 22050 in ffmpeg calls
+655754c	0	true	keep	use OUTPUT_SAMPLE_RATE in _ensure_wav helper too (last hardcoded 22050)
+1279a20	0	true	keep	log warning for unsupported language fallback in Chatterbox synthesize
+b98b725	0	true	keep	memoize streamProcessingTime and streamDuration with useMemo
+4515258	0	true	keep	guard against empty response body from Fish Speech server
+4e1d707	0	true	keep	make VOICE_TYPES and SONG_DB immutable tuples
+217998f	0	true	keep	make NOTE_NAMES an immutable tuple
+b726127	0	true	keep	make ALLOWED_AUDIO_EXTENSIONS a frozenset
+21ce264	0	true	keep	freeze LANGUAGES/SAMPLE_TEXTS/ENGINE_LABELS with as const/Readonly
+2eaa481	0	true	keep	remove unused fetchAllEngines function and EngineListResponse import (-6 lines)
+5356415	0	true	keep	remove unused Preset and EngineListResponse interfaces from types.ts (-14 lines)
+e1fbd8d	0	true	keep	extract TTS_EXECUTOR_WORKERS to config
+5483dc1	0	true	keep	extract LOG_BUFFER_MAXLEN to config
+f6b7250	0	true	keep	organize config.py constants into logical groups with section headers
+f63de4f	0	true	keep	close engine dropdown on outside click (UX fix)
+a6bc0ae	0	true	keep	use Literal EngineId type in Pydantic schemas for stricter API docs
+b93a78f	0	true	keep	add error logging on preset save failure
+8ffc820	0	true	keep	add timer cleanup on VoiceUploader unmount (prevent memory leak)
+d70c75f	0	true	keep	replace silent except with warning log in delete_voice_preset
+d721ee3	0	true	keep	add warning log for skipped preset parsing in list_voice_presets
+8ccc076	0	true	keep	move wave import to module level in tts.py
+9845b1a	0	true	keep	sort stdlib imports alphabetically in tts.py
+1710393	0	true	keep	consolidate stdlib import block in vocal.py
+719cd26	0	true	keep	sort stdlib imports alphabetically in fish_speech_engine.py
+8eb4a8f	0	true	keep	add error handling with clear message in _ensure_wav ffmpeg call
+6766b99	0	true	keep	move wave import to module level in fish_speech_engine.py
+9a95540	0	true	keep	remove unnecessary _ = assignments in generate_presets.py
+dd163b5	0	true	keep	simplify generate_presets: replace getattr/intermediate vars with direct args access (-18 lines)
