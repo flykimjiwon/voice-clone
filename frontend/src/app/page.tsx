@@ -126,6 +126,19 @@ export default function Home() {
   const progressEsRef = useRef<EventSource | null>(null);
   const cancelledRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const engineDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close engine dropdown on outside click
+  useEffect(() => {
+    if (!engineDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (engineDropdownRef.current && !engineDropdownRef.current.contains(e.target as Node)) {
+        setEngineDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [engineDropdownOpen]);
 
   // ─── Engine status fetch ───
 
@@ -465,7 +478,7 @@ export default function Home() {
             </div>
 
             {/* ─── Engine selector ─── */}
-            <div className="ml-4 relative">
+            <div className="ml-4 relative" ref={engineDropdownRef}>
               <button
                 onClick={() => setEngineDropdownOpen((v) => !v)}
                 className={cn(
