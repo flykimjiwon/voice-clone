@@ -4,6 +4,8 @@ import asyncio
 import math
 from pathlib import Path
 
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Query
 
 from ..config import UPLOAD_DIR, VOICE_PRESETS_DIR
@@ -260,7 +262,7 @@ async def analyze_vocal_range(
 async def get_song_recommendations(
     low_hz: float = Query(...),
     high_hz: float = Query(...),
-    language: str = Query(None),
+    language: Optional[str] = Query(None),
 ):
     """Get song recommendations based on vocal range."""
     if low_hz <= 0 or high_hz <= low_hz:
