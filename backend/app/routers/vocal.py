@@ -1,5 +1,6 @@
 """Vocal range analysis and song recommendation endpoints."""
 
+import asyncio
 import math
 from pathlib import Path
 
@@ -216,8 +217,6 @@ async def analyze_vocal_range(
     preset_id: str = Query(""),
 ):
     """Analyze vocal range from an uploaded voice or preset."""
-    import asyncio
-
     wav_path: Path | None = None
 
     if voice_id:
