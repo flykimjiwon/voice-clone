@@ -16,6 +16,7 @@ from ..config import (
     VOICE_PRESETS_DIR,
     ALLOWED_AUDIO_EXTENSIONS,
     FISH_SPEECH_URL,
+    MAX_UPLOAD_SIZE,
 )
 from ..schemas import (
     EngineStatusResponse,
@@ -175,6 +176,11 @@ async def upload_voice(file: UploadFile = File(...)):
     raw_path = UPLOAD_DIR / f"{voice_id}{ext}"
 
     content = await file.read()
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"파일이 너무 큽니다. (최대 {MAX_UPLOAD_SIZE // (1024 * 1024)}MB)",
+        )
     with open(raw_path, "wb") as f:
         f.write(content)
 
