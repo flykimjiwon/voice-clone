@@ -37,7 +37,12 @@ app.include_router(vocal_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    from .routers.tts import _engines
+
+    engines_status = {
+        eid: e.is_available() for eid, e in _engines.items()
+    }
+    return {"status": "ok", "engines": engines_status}
 
 
 @app.get("/api/logs/stream")
