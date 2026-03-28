@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { memo, useState, useCallback } from "react";
 import { ChevronDown, RotateCcw, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -160,7 +160,7 @@ function roundTo(value: number, step: number): number {
   return Number(value.toFixed(decimals));
 }
 
-export default function ParamsPanel({
+function ParamsPanel({
   params,
   onChange,
   engineId = "chatterbox",
@@ -388,3 +388,5 @@ export default function ParamsPanel({
     </div>
   );
 }
+
+export default memo(ParamsPanel);
