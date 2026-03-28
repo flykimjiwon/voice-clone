@@ -11,10 +11,6 @@ export interface EngineStatus {
   error?: string | null;
 }
 
-export interface EngineListResponse {
-  engines: EngineStatus[];
-}
-
 export interface SynthesizeResponse {
   audio_url: string;
   duration_seconds: number;
@@ -55,16 +51,6 @@ export interface EngineProgress {
 export interface PrepareVoiceResponse {
   prepared: boolean;
   was_new: boolean;
-}
-
-export interface Preset {
-  id: string;
-  name: string;
-  voice_ids: string[];
-  voice_filenames: string[];
-  language: string;
-  params: SynthesisParams;
-  created_at: number;
 }
 
 // ─── Vocal analysis ───
