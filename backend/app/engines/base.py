@@ -62,5 +62,24 @@ class TTSEngine(ABC):
         """Delete saved embedding files. embed_path is the .pt stem key."""
         embed_path.unlink(missing_ok=True)
 
+    @staticmethod
+    def post_process_audio(wav, sample_rate: int, speed: float, pitch_semitones: float):
+        """Apply speed and pitch modifications to generated audio."""
+        import torch
+        import torchaudio.functional as F
+
+        wav = wav.cpu()
+
+        if pitch_semitones != 0:
+            wav = F.pitch_shift(wav, sample_rate, n_steps=pitch_semitones)
+
+        if speed != 1.0:
+            new_length = int(wav.shape[-1] / speed)
+            wav = torch.nn.functional.interpolate(
+                wav.unsqueeze(0), size=new_length, mode="linear", align_corners=False
+            ).squeeze(0)
+
+        return wav
+
     def get_error_message(self) -> str | None:
         return None

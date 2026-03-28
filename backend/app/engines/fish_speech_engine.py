@@ -242,22 +242,11 @@ class FishSpeechEngine(TTSEngine):
         sample_rate = 44100
 
         if speed != 1.0 or pitch_semitones != 0.0:
-            import torch
             import torchaudio
-            import torchaudio.functional as F
 
             waveform, sr = torchaudio.load(str(output_path))
             sample_rate = sr
-
-            waveform = waveform.cpu()
-            if pitch_semitones != 0.0:
-                waveform = F.pitch_shift(waveform, sample_rate, n_steps=pitch_semitones)
-            if speed != 1.0:
-                new_length = int(waveform.shape[-1] / speed)
-                waveform = torch.nn.functional.interpolate(
-                    waveform.unsqueeze(0), size=new_length, mode="linear", align_corners=False
-                ).squeeze(0)
-
+            waveform = self.post_process_audio(waveform, sample_rate, speed, pitch_semitones)
             torchaudio.save(str(output_path), waveform, sample_rate)
 
         # Calculate duration

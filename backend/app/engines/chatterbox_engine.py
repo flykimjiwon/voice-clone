@@ -163,28 +163,6 @@ class ChatterboxEngine(TTSEngine):
         )
         self._prepared_hash = f"preset_{load_path.stem}"
 
-    @staticmethod
-    def _post_process_audio(wav, sample_rate: int, speed: float, pitch_semitones: float):
-        """Apply speed and pitch modifications to generated audio."""
-        import torch
-        import torchaudio.functional as F
-
-        wav = wav.cpu()
-
-        # Pitch shift (without speed change)
-        if pitch_semitones != 0:
-            wav = F.pitch_shift(wav, sample_rate, n_steps=pitch_semitones)
-
-        # Speed change via interpolation (changes speed AND pitch together).
-        # Combined with pitch_semitones this gives full voice character control.
-        if speed != 1.0:
-            new_length = int(wav.shape[-1] / speed)
-            wav = torch.nn.functional.interpolate(
-                wav.unsqueeze(0), size=new_length, mode="linear", align_corners=False
-            ).squeeze(0)
-
-        return wav
-
     def synthesize(
         self,
         text: str,
@@ -242,7 +220,7 @@ class ChatterboxEngine(TTSEngine):
 
         # Post-process: apply speed/pitch for voice concept variation
         if speed != 1.0 or pitch_semitones != 0:
-            wav = self._post_process_audio(wav, sample_rate, speed, pitch_semitones)
+            wav = self.post_process_audio(wav, sample_rate, speed, pitch_semitones)
 
         torchaudio.save(str(output_path), wav, sample_rate)
 
