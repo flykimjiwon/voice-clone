@@ -1,5 +1,6 @@
 import asyncio
 import json
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +12,15 @@ from .log_stream import log_buffer, install_log_capture, set_event_loop
 
 install_log_capture()
 
-app = FastAPI(title="TTS Comparison API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    loop = asyncio.get_event_loop()
+    set_event_loop(loop)
+    yield
+
+
+app = FastAPI(title="TTS Comparison API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,12 +32,6 @@ app.add_middleware(
 
 app.include_router(tts_router)
 app.include_router(vocal_router)
-
-
-@app.on_event("startup")
-async def on_startup():
-    loop = asyncio.get_event_loop()
-    set_event_loop(loop)
 
 
 @app.get("/health")
