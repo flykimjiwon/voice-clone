@@ -348,7 +348,8 @@ async def list_voice_presets(
         try:
             data = json.loads(json_path.read_text())
             preset = VoicePresetResponse(**data)
-        except Exception:
+        except Exception as e:
+            _emit_log("chatterbox", f"프리셋 파싱 스킵 ({json_path.name}): {e}", "WARNING")
             continue
 
         if gender is not None and preset.gender != gender:
