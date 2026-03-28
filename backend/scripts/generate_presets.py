@@ -171,9 +171,7 @@ def main() -> None:
         print(f"Dry run complete: {found}/{len(entries)} files found")
         sys.exit(0)
 
-    import sys as _sys
-
-    _sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     chatterbox_module = importlib.import_module("app.engines.chatterbox_engine")
     chatterbox_engine_cls = cast(
         type[ChatterboxEngineProtocol],
