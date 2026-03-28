@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { memo, useState, useEffect, useRef, useCallback } from "react";
 import { X, Trash2, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ function formatTime(ts: number): string {
   });
 }
 
-export default function ServerLogModal({ open, onClose }: ServerLogModalProps) {
+function ServerLogModal({ open, onClose }: ServerLogModalProps) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -220,3 +220,5 @@ export default function ServerLogModal({ open, onClose }: ServerLogModalProps) {
     </div>
   );
 }
+
+export default memo(ServerLogModal);
