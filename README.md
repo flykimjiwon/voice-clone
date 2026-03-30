@@ -1,6 +1,6 @@
 # 음성 클론 (Voice Clone)
 
-**Chatterbox TTS 기반 Zero-shot Voice Cloning 웹 애플리케이션**
+**Chatterbox TTS + Fish Speech S2 기반 Zero-shot Voice Cloning 웹 애플리케이션**
 
 음성 파일 하나(15초)만으로 누구의 목소리든 복제하고, 텍스트를 입력하면 해당 목소리로 즉시 음성을 생성합니다. 클론한 목소리의 속도와 음정을 조정해 여러 개의 음성 페르소나를 만들 수 있고, 프리셋 시스템으로 한번 클론한 목소리를 저장해 반복 사용할 수 있습니다.
 
@@ -14,7 +14,7 @@
 ### 1. **Zero-shot Voice Cloning** (무제한 음성 생성)
 - 별도 학습 없이 15초 분량의 음성 샘플 하나로 즉시 목소리 복제
 - 복제 후 텍스트만 바꿔가며 무제한으로 음성 생성
-- 23개 언어 지원 (한국어, 영어, 중국어, 일본어 등)
+- Chatterbox: 15개 언어 / Fish Speech S2: 47개 언어 지원
 
 ### 2. **음성 컨셉 (Voice Concept)** - NEW
 - **속도 조정**: 0.5배 ~ 2.0배로 음성 속도 변경
@@ -58,7 +58,8 @@
 | **Python** | 3.11+ | 런타임 |
 | **FastAPI** | 0.115+ | REST API 서버 |
 | **Uvicorn** | 0.34+ | ASGI 서버 |
-| **Chatterbox TTS** | latest | Resemble AI의 Zero-shot Voice Cloning 엔진 |
+| **Chatterbox TTS** | latest | Resemble AI의 Zero-shot Voice Cloning 엔진 (로컬, MPS/CUDA/CPU) |
+| **Fish Speech S2** | latest | Fish Audio의 Dual-AR TTS 엔진 (원격 API, CUDA 필수) |
 | **PyTorch** | 2.x | 딥러닝 프레임워크 (MPS/CUDA/CPU 지원) |
 | **torchaudio** | 2.x | 오디오 처리, 피치 분석, 속도 조정 |
 | **Pydantic** | 2.10+ | 요청/응답 스키마 검증 |
@@ -391,7 +392,7 @@ COQUI_TOS_AGREED=1 PYTORCH_ENABLE_MPS_FALLBACK=1 python -m scripts.generate_pres
 | 변수 | 기본값 | 설명 |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | 백엔드 API URL |
-| `FISH_SPEECH_URL` | `http://localhost:8888` | Fish Audio S2 서버 URL (선택) |
+| `FISH_SPEECH_URL` | `http://localhost:8080` | Fish Audio S2 서버 URL (선택) |
 
 ---
 
@@ -408,11 +409,13 @@ COQUI_TOS_AGREED=1 PYTORCH_ENABLE_MPS_FALLBACK=1 python -m scripts.generate_pres
 
 ## 지원 언어
 
-Chatterbox TTS는 23개 언어를 지원합니다:
+### Chatterbox TTS (15개 언어)
+- **아시아**: 한국어, 중국어, 일본어
+- **유럽**: 영어, 스페인어, 프랑스어, 독일어, 이탈리아어, 포르투갈어, 폴란드어, 네덜란드어, 터키어
+- **기타**: 러시아어, 아랍어, 힌디어
 
-- **아시아 언어**: 한국어, 중국어 (Mandarin), 일본어, 태국어, 베트남어, 인도네시아어
-- **유럽 언어**: 영어, 스페인어, 프랑스어, 독일어, 이탈리아어, 포르투갈어, 폴란드어, 네덜란드어, 스웨덴어, 덴마크어, 노르웨이어, 핀란드어
-- **기타**: 러시아어, 그리스어, 터키어, 아랍어
+### Fish Speech S2 (47개 언어)
+위 15개 + 스웨덴어, 덴마크어, 핀란드어, 그리스어, 히브리어, 말레이어, 노르웨이어, 스와힐리어, 우크라이나어, 체코어, 루마니아어, 헝가리어, 인도네시아어, 베트남어, 태국어 등
 
 ---
 
@@ -474,16 +477,30 @@ export PYTORCH_ENABLE_MPS_FALLBACK=1
 
 ### Fish Audio S2 엔진 사용
 
-Fish Audio S2 엔진을 사용하면 더 빠른 생성 속도를 얻을 수 있습니다 (CUDA 필수).
+Fish Audio S2 엔진을 사용하면 더 빠른 생성 속도와 47개 언어를 지원합니다 (CUDA 필수).
 
-별도의 Fish Speech 서버를 실행한 후:
-
+**Docker Compose로 실행 (권장):**
 ```bash
-# env 변수 설정
-export FISH_SPEECH_URL=http://localhost:8888
-
-# 프론트엔드에서 엔진 선택 가능
+docker-compose up --build
+# fish-speech 서버가 자동으로 8080에서 시작됩니다
 ```
+
+**수동 설정:**
+```bash
+# 1. 모델 다운로드
+huggingface-cli download fishaudio/s2-pro --local-dir checkpoints/s2-pro
+
+# 2. Fish Speech 서버 실행
+python tools/api_server.py \
+  --llama-checkpoint-path checkpoints/s2-pro \
+  --decoder-checkpoint-path checkpoints/s2-pro/codec.pth \
+  --listen 0.0.0.0:8080
+
+# 3. 백엔드에 URL 설정
+export FISH_SPEECH_URL=http://localhost:8080
+```
+
+프론트엔드에서 엔진 드롭다운으로 "Fish Audio S2" 선택 가능합니다.
 
 ### 로그 실시간 확인
 

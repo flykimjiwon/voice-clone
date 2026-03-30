@@ -8,7 +8,7 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/outputs:/app/outputs
-      - tts-models:/root/.local/share/tts
+      - ./backend/voice_presets:/app/voice_presets
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - FISH_SPEECH_URL=http://fish-speech:8080
@@ -65,5 +65,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  tts-models:
   fish-speech-models:

@@ -9,19 +9,13 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install --no-cache-dir TTS httpx
-
-RUN git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git /opt/cosyvoice && \
-    cd /opt/cosyvoice && \
-    pip install --no-cache-dir -r requirements.txt || true
-
 RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+RUN pip install --no-cache-dir chatterbox-tts
 
 COPY backend/app/ ./app/
-RUN mkdir -p uploads outputs
+RUN mkdir -p uploads outputs voice_presets
 
 ENV PYTHONUNBUFFERED=1
-ENV COSYVOICE_DIR=/opt/cosyvoice
 
 EXPOSE 8000
 

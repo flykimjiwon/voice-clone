@@ -4,6 +4,7 @@ python-multipart==0.0.20
 pydantic==2.10.4
 aiofiles==24.1.0
 requests>=2.31.0
+sse-starlette>=1.6.0
 
 # TTS Engines (install separately based on need)
 # Chatterbox:    pip install chatterbox-tts

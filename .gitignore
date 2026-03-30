@@ -50,6 +50,19 @@ Thumbs.db
 # Ruff
 .ruff_cache/
 
+# OMC / Agent tooling
+.omc/
+.agent/
+.agents/
+
+# Voice preset ref files (Fish Speech)
+backend/voice_presets/*.ref.wav
+backend/voice_presets/*.transcript
+
+# Screenshots & generated reports
+*.png
+results.tsv
+
 # Misc
 *.pem
 npm-debug.log*
